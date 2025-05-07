@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useAuth } from '../AuthContext';
-
+import { useNavigate } from 'react-router-dom';
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const { login } = useAuth(); // используем login из контекста
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -20,6 +21,7 @@ function Login() {
       const data = await res.json();
       if (res.ok) {
         login(data.user); // сохраняем пользователя в контекст и localStorage
+        navigate('/news'); // или куда нужно перенаправить
         setMessage(`Добро пожаловать, ${data.user.username}`);
       } else {
         setMessage(data.message || 'Ошибка входа');

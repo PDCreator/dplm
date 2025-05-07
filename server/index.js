@@ -25,6 +25,57 @@ app.get('/api/news', (req, res) => {
       res.json(results);
     });
   });
+
+app.post('/api/news', (req, res) => {
+    const { title, content } = req.body;
+  
+    if (!title || !content) {
+      return res.status(400).json({ message: 'Заполните заголовок и содержимое' });
+    }
+  
+    const query = 'INSERT INTO news (title, content, created_at) VALUES (?, ?, NOW())';
+    db.query(query, [title, content], (err, result) => {
+      if (err) {
+        console.error('Ошибка при добавлении новости:', err);
+        return res.status(500).json({ message: 'Ошибка при добавлении новости' });
+      }
+      res.json({ message: 'Новость успешно добавлена', id: result.insertId });
+    });
+  });
+
+// Обновить новость
+app.put('/api/news/:id', (req, res) => {
+  const { title, content } = req.body;
+  const { id } = req.params;
+
+  if (!title || !content) {
+    return res.status(400).json({ message: 'Заполните заголовок и содержимое' });
+  }
+
+  const query = 'UPDATE news SET title = ?, content = ? WHERE id = ?';
+  db.query(query, [title, content, id], (err, result) => {
+    if (err) {
+      console.error('Ошибка при обновлении новости:', err);
+      return res.status(500).json({ message: 'Ошибка при обновлении' });
+    }
+    res.json({ message: 'Новость обновлена' });
+  });
+});
+
+// Удалить новость
+app.delete('/api/news/:id', (req, res) => {
+  const { id } = req.params;
+
+  const query = 'DELETE FROM news WHERE id = ?';
+  db.query(query, [id], (err, result) => {
+    if (err) {
+      console.error('Ошибка при удалении новости:', err);
+      return res.status(500).json({ message: 'Ошибка при удалении' });
+    }
+    res.json({ message: 'Новость удалена' });
+  });
+});
+
 app.get('/', (req, res) => {
     res.send('Backend работает!');
   });

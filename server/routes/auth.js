@@ -62,7 +62,7 @@ router.post('/login', (req, res) => {
       }
   
       // Тут можно добавить токен/сессию, но пока просто ответ:
-      res.json({ message: 'Успешный вход', user: { id: user.id, username: user.username } });
+      res.json({ message: 'Успешный вход', user: { id: user.id, username: user.username, is_admin: user.is_admin } });
     });
   });
 
