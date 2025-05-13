@@ -4,6 +4,7 @@ const db = require('./db');
 const commentRoutes = require('./routes/comments');
 const likeRoutes = require('./routes/likes');
 const placeRoutes = require('./routes/places');
+const favoritesRoutes = require('./routes/favorites');
 
 require('dotenv').config();
 
@@ -17,6 +18,8 @@ app.use('/api/places', placeRoutes);
 
 app.use('/api/comments', commentRoutes);
 app.use('/api/likes', likeRoutes);
+
+app.use('/api/favorites', favoritesRoutes);
 
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);

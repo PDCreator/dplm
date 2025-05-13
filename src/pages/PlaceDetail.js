@@ -12,6 +12,7 @@ function PlaceDetail() {
   const [likedByUser, setLikedByUser] = useState(false);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
+  const [isFavorited, setIsFavorited] = useState(false); // Состояние для отслеживания, добавлено ли в избранное
 
   useEffect(() => {
     // Получить данные о месте
@@ -35,7 +36,32 @@ function PlaceDetail() {
     fetch(`${API}/comments/place/${id}`)
       .then(res => res.json())
       .then(setComments);
+
+    // Проверить, добавлено ли место в избранное
+    if (user) {
+      fetch(`${API}/favorites/place/${id}?user_id=${user.id}`)
+        .then(res => res.json())
+        .then(data => {
+          setIsFavorited(data.isFavorited || false);
+        });
+    }
   }, [id, user]);
+
+  // Добавить место в избранное
+  const addToFavorites = async (placeId) => {
+    if (!user) return alert('Войдите, чтобы добавить место в избранное');
+    if (isFavorited) return alert('Это место уже в вашем избранном'); // Проверка, если место уже в избранном
+
+    const res = await fetch(`${API}/favorites/${placeId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: user.id }),
+    });
+
+    if (res.ok) {
+      setIsFavorited(true); // Обновляем состояние, что место добавлено в избранное
+    }
+  };
 
   const toggleLike = async () => {
     if (!user) return alert('Войдите, чтобы ставить лайки');
@@ -82,6 +108,12 @@ function PlaceDetail() {
           {likedByUser ? '❤️ Убрать лайк' : '🤍 Лайкнуть'}
         </button>
         <span style={{ marginLeft: '0.5rem' }}>{likeCount} лайков</span>
+      </div>
+
+      <div style={{ marginTop: '1rem' }}>
+        <button onClick={() => addToFavorites(id)} disabled={isFavorited}>
+          {isFavorited ? '⭐ Уже в избранном' : 'Добавить в избранное'}
+        </button>
       </div>
 
       <div style={{ marginTop: '2rem' }}>
