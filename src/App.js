@@ -6,6 +6,7 @@ import Profile from './pages/Profile';
 import Admin from './pages/Admin';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import NewsDetail from './pages/NewsDetail';
 import { useAuth } from './AuthContext';
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
         <Route path="/admin" element={isLoggedIn && isAdmin ? <Admin /> : <Navigate to="/news" />} />
         <Route path="/login" element={!isLoggedIn ? <Login /> : <Navigate to="/news" />} />
         <Route path="/register" element={!isLoggedIn ? <Register /> : <Navigate to="/news" />} />
+        <Route path="/news/:id" element={<NewsDetail />} />
         <Route path="*" element={<Navigate to="/news" />} />
       </Routes>
     </Router>

@@ -1,6 +1,6 @@
 // src/pages/News.js
 import { useEffect, useState } from 'react';
-
+import { Link } from 'react-router-dom';
 function News() {
   const [newsList, setNewsList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +28,7 @@ function News() {
       ) : (
         newsList.map((news) => (
           <div key={news.id} style={{ borderBottom: '1px solid #ccc', marginBottom: '1rem' }}>
-            <h3>{news.title}</h3>
+            <Link to={`/news/${news.id}`}>{news.title}</Link>
             <p>{news.content}</p>
             <small>{new Date(news.created_at).toLocaleString()}</small>
           </div>

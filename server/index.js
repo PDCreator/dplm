@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./db');
+const commentRoutes = require('./routes/comments');
+const likeRoutes = require('./routes/likes');
 
 require('dotenv').config();
 
@@ -9,6 +11,10 @@ const app = express();
 // 📌 Добавь это:
 app.use(express.json()); // чтобы читать JSON из body
 app.use(cors());
+
+
+app.use('/api/comments', commentRoutes);
+app.use('/api/likes', likeRoutes);
 
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
@@ -75,6 +81,26 @@ app.delete('/api/news/:id', (req, res) => {
     res.json({ message: 'Новость удалена' });
   });
 });
+
+// Получить конкретную новость по ID
+app.get('/api/news/:id', (req, res) => {
+  const { id } = req.params;
+
+  const query = 'SELECT * FROM news WHERE id = ?';
+  db.query(query, [id], (err, results) => {
+    if (err) {
+      console.error('Ошибка при получении новости:', err);
+      return res.status(500).json({ message: 'Ошибка при получении новости' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'Новость не найдена' });
+    }
+
+    res.json(results[0]);
+  });
+});
+
 
 app.get('/', (req, res) => {
     res.send('Backend работает!');
