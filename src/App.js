@@ -8,7 +8,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import NewsDetail from './pages/NewsDetail';
 import { useAuth } from './AuthContext';
-
 function App() {
   const { user, logout, isLoading } = useAuth();
 

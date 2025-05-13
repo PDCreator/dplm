@@ -3,6 +3,7 @@ const cors = require('cors');
 const db = require('./db');
 const commentRoutes = require('./routes/comments');
 const likeRoutes = require('./routes/likes');
+const placeRoutes = require('./routes/places');
 
 require('dotenv').config();
 
@@ -12,6 +13,7 @@ const app = express();
 app.use(express.json()); // чтобы читать JSON из body
 app.use(cors());
 
+app.use('/api/places', placeRoutes);
 
 app.use('/api/comments', commentRoutes);
 app.use('/api/likes', likeRoutes);
