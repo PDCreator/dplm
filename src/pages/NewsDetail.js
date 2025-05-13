@@ -19,41 +19,48 @@ function NewsDetail() {
       .then(setNews);
 
     if (user) {
-      fetch(`${API}/likes/${id}?user_id=${user.id}`)
+      fetch(`${API}/likes/news/${id}?user_id=${user.id}`)
         .then(res => res.json())
         .then(data => {
           setLikeCount(data.likeCount);
           setLikedByUser(data.likedByUser);
         });
+    } else {
+      fetch(`${API}/likes/news/${id}`)
+        .then(res => res.json())
+        .then(data => {
+          setLikeCount(data.likeCount);
+          setLikedByUser(false);
+        });
     }
 
-    fetch(`${API}/comments/${id}`)
+    fetch(`${API}/comments/news/${id}`)
       .then(res => res.json())
       .then(setComments);
   }, [id, user]);
 
   const toggleLike = async () => {
     if (!user) return alert('Войдите, чтобы ставить лайки');
-    const res = await fetch(`${API}/likes/${id}`, {
+
+    const res = await fetch(`${API}/likes/news/${id}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: user.id }),
     });
-    const msg = await res.json();
-    console.log(msg);
 
-    // Обновим данные
-    const likeRes = await fetch(`${API}/likes/${id}?user_id=${user.id}`);
-    const data = await likeRes.json();
-    setLikeCount(data.likeCount);
-    setLikedByUser(data.likedByUser);
+    if (res.ok) {
+      const likeRes = await fetch(`${API}/likes/news/${id}?user_id=${user.id}`);
+      const data = await likeRes.json();
+      setLikeCount(data.likeCount);
+      setLikedByUser(data.likedByUser);
+    }
   };
 
   const submitComment = async () => {
     if (!user) return alert('Войдите, чтобы комментировать');
     if (!commentText.trim()) return;
 
-    const res = await fetch(`${API}/comments/${id}`, {
+    const res = await fetch(`${API}/comments/news/${id}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: user.id, content: commentText }),
@@ -61,7 +68,7 @@ function NewsDetail() {
 
     if (res.ok) {
       setCommentText('');
-      const updated = await fetch(`${API}/comments/${id}`).then(res => res.json());
+      const updated = await fetch(`${API}/comments/news/${id}`).then(res => res.json());
       setComments(updated);
     }
   };
@@ -84,7 +91,7 @@ function NewsDetail() {
       <div style={{ marginTop: '2rem' }}>
         <h4>Комментарии</h4>
 
-        {user && (
+        {user ? (
           <div>
             <textarea
               value={commentText}
@@ -95,9 +102,9 @@ function NewsDetail() {
             />
             <button onClick={submitComment}>Отправить</button>
           </div>
+        ) : (
+          <p>Чтобы оставить комментарий, <a href="/login">войдите</a>.</p>
         )}
-
-        {!user && <p>Чтобы оставить комментарий, <a href="/login">войдите</a>.</p>}
 
         {comments.length > 0 ? (
           <ul>

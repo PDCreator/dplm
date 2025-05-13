@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 function Places() {
   const [places, setPlaces] = useState([]);
@@ -15,7 +16,11 @@ function Places() {
       <h1 className="text-2xl font-bold mb-4">Места</h1>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {places.map(place => (
-          <div key={place.id} className="border rounded-2xl shadow p-4">
+          <Link
+            to={`/places/${place.id}`}
+            key={place.id}
+            className="border rounded-2xl shadow p-4 hover:shadow-lg transition duration-200 block"
+          >
             {place.image && (
               <img
                 src={place.image}
@@ -28,7 +33,7 @@ function Places() {
             {place.tags && (
               <p className="text-sm text-blue-600 mt-1">#{place.tags.split(',').join(' #')}</p>
             )}
-          </div>
+          </Link>
         ))}
       </div>
     </div>

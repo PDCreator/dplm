@@ -4,7 +4,7 @@ import { useAuth } from '../AuthContext';
 import API from '../components/api';
 
 function PlaceDetail() {
-  const { id } = useParams();
+  const { id } = useParams(); // ID места из URL
   const { user } = useAuth();
 
   const [place, setPlace] = useState(null);
@@ -12,63 +12,51 @@ function PlaceDetail() {
   const [likedByUser, setLikedByUser] = useState(false);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
-  const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
+    // Получить данные о месте
     fetch(`${API}/places/${id}`)
       .then(res => res.json())
       .then(setPlace);
 
-    if (user) {
-      fetch(`${API}/likes/${id}?user_id=${user.id}&type=place`)
-        .then(res => res.json())
-        .then(data => {
-          setLikeCount(data.likeCount);
-          setLikedByUser(data.likedByUser);
-        });
+    // Получить лайки
+    const likeUrl = user 
+      ? `${API}/likes/place/${id}?user_id=${user.id}`
+      : `${API}/likes/place/${id}`;
 
-      fetch(`${API}/favorites/${id}?user_id=${user.id}`)
-        .then(res => res.json())
-        .then(data => setIsFavorite(data.isFavorite));
-    }
+    fetch(likeUrl)
+      .then(res => res.json())
+      .then(data => {
+        setLikeCount(data.likeCount);
+        setLikedByUser(data.likedByUser || false);
+      });
 
-    fetch(`${API}/comments/${id}?type=place`)
+    // Получить комментарии
+    fetch(`${API}/comments/place/${id}`)
       .then(res => res.json())
       .then(setComments);
   }, [id, user]);
 
   const toggleLike = async () => {
     if (!user) return alert('Войдите, чтобы ставить лайки');
-    const res = await fetch(`${API}/likes/${id}?type=place`, {
+
+    await fetch(`${API}/likes/place/${id}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: user.id }),
     });
 
+    const res = await fetch(`${API}/likes/place/${id}?user_id=${user.id}`);
     const data = await res.json();
-    const updated = await fetch(`${API}/likes/${id}?user_id=${user.id}&type=place`)
-      .then(res => res.json());
-    setLikeCount(updated.likeCount);
-    setLikedByUser(updated.likedByUser);
-  };
-
-  const toggleFavorite = async () => {
-    if (!user) return alert('Войдите, чтобы добавить в избранное');
-    const res = await fetch(`${API}/favorites/${id}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: user.id }),
-    });
-
-    const data = await res.json();
-    setIsFavorite(data.isFavorite);
+    setLikeCount(data.likeCount);
+    setLikedByUser(data.likedByUser);
   };
 
   const submitComment = async () => {
     if (!user) return alert('Войдите, чтобы комментировать');
     if (!commentText.trim()) return;
 
-    const res = await fetch(`${API}/comments/${id}?type=place`, {
+    const res = await fetch(`${API}/comments/place/${id}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: user.id, content: commentText }),
@@ -76,7 +64,7 @@ function PlaceDetail() {
 
     if (res.ok) {
       setCommentText('');
-      const updated = await fetch(`${API}/comments/${id}?type=place`).then(res => res.json());
+      const updated = await fetch(`${API}/comments/place/${id}`).then(res => res.json());
       setComments(updated);
     }
   };
@@ -96,16 +84,10 @@ function PlaceDetail() {
         <span style={{ marginLeft: '0.5rem' }}>{likeCount} лайков</span>
       </div>
 
-      <div style={{ marginTop: '1rem' }}>
-        <button onClick={toggleFavorite}>
-          {isFavorite ? '⭐ Удалить из избранного' : '☆ В избранное'}
-        </button>
-      </div>
-
       <div style={{ marginTop: '2rem' }}>
         <h4>Комментарии</h4>
 
-        {user && (
+        {user ? (
           <div>
             <textarea
               value={commentText}
@@ -116,9 +98,9 @@ function PlaceDetail() {
             />
             <button onClick={submitComment}>Отправить</button>
           </div>
+        ) : (
+          <p>Чтобы оставить комментарий, <a href="/login">войдите</a>.</p>
         )}
-
-        {!user && <p>Чтобы оставить комментарий, <a href="/login">войдите</a>.</p>}
 
         {comments.length > 0 ? (
           <ul>

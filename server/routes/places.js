@@ -41,5 +41,14 @@ router.put('/:id', (req, res) => {
     });
   });
   
+// Получить конкретное место по ID
+router.get('/:id', (req, res) => {
+    const { id } = req.params;
+    db.query('SELECT * FROM places WHERE id = ?', [id], (err, results) => {
+      if (err) return res.status(500).json({ error: 'Ошибка при получении места' });
+      if (results.length === 0) return res.status(404).json({ error: 'Место не найдено' });
+      res.json(results[0]);
+    });
+  });
 
 module.exports = router;
