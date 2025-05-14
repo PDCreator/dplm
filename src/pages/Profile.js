@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext';
 import API from '../components/api';
+import { Link } from 'react-router-dom';
 
 function Profile() {
-  const { user } = useAuth(); // Получаем информацию о пользователе из контекста
-  const [favorites, setFavorites] = useState([]); // Состояние для хранения избранных мест
+  const { user } = useAuth();
+  const [favorites, setFavorites] = useState([]);
 
-  // Загружаем избранные места при монтировании компонента
   useEffect(() => {
     if (user) {
       fetch(`${API}/favorites/user/${user.id}`)
@@ -15,9 +15,6 @@ function Profile() {
     }
   }, [user]);
 
-  
-
-  // Удалить место из избранного
   const removeFromFavorites = async (placeId) => {
     if (!user) return alert('Войдите, чтобы удалить место из избранного');
 
@@ -28,11 +25,10 @@ function Profile() {
     });
 
     if (res.ok) {
-      setFavorites(favorites.filter(place => place.id !== placeId)); // Удаляем место из списка
+      setFavorites(favorites.filter(place => place.id !== placeId));
     }
   };
 
-  // Если пользователь не авторизован
   if (!user) return <div>Для доступа к профилю, пожалуйста, войдите.</div>;
 
   return (
@@ -42,20 +38,41 @@ function Profile() {
 
       <h3>Ваши избранные места:</h3>
       {favorites.length > 0 ? (
-        <ul>
-          {favorites.map(favorite => (
-            <li key={favorite.id}>
-              <span>{favorite.name || `Место ${favorite.id}`}</span> {/* Если имя не задано, отображаем ID */}
-              <button onClick={() => removeFromFavorites(favorite.id)}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          gap: '1rem'
+        }}>
+          {favorites.map(place => (
+            <div key={place.id} style={{
+              border: '1px solid #ccc',
+              borderRadius: '8px',
+              padding: '1rem',
+              textAlign: 'center',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+            }}>
+              <Link to={`/places/${place.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <h4>{place.title}</h4>
+              </Link>
+              {place.image && (
+                <img
+                  src={`${API}/uploads/${place.image}`}
+                  alt={place.title}
+                  style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '6px' }}
+                />
+              )}
+              <button
+                onClick={() => removeFromFavorites(place.id)}
+                style={{ marginTop: '0.5rem' }}
+              >
                 Удалить из избранного
               </button>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       ) : (
         <p>У вас пока нет избранных мест.</p>
       )}
-
     </div>
   );
 }
