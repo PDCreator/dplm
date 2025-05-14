@@ -44,4 +44,20 @@ router.get('/user/:user_id', (req, res) => {
     });
   });
   
+  // Проверить, добавлено ли место в избранное
+router.get('/place/:place_id', (req, res) => {
+    const { place_id } = req.params;
+    const { user_id } = req.query;
+  
+    if (!user_id) {
+      return res.status(400).json({ error: 'user_id обязателен' });
+    }
+  
+    const query = 'SELECT * FROM favorites WHERE user_id = ? AND place_id = ?';
+    db.query(query, [user_id, place_id], (err, results) => {
+      if (err) return res.status(500).json({ error: 'Ошибка при проверке избранного' });
+      res.json({ isFavorited: results.length > 0 });
+    });
+  });
+  
   module.exports = router;
