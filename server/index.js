@@ -5,6 +5,7 @@ const commentRoutes = require('./routes/comments');
 const likeRoutes = require('./routes/likes');
 const placeRoutes = require('./routes/places');
 const favoritesRoutes = require('./routes/favorites');
+const userRoutes = require('./routes/users');
 
 
 require('dotenv').config();
@@ -26,6 +27,8 @@ const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 app.use(cors());
 app.use(express.json());
+
+app.use('/api/users', userRoutes);
 
 // Пример запроса
 app.get('/api/news', (req, res) => {

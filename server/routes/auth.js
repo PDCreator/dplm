@@ -3,6 +3,8 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const db = require('../db');
 
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 router.post('/register', (req, res) => {
   const { username, password} = req.body;
 
@@ -66,4 +68,65 @@ router.post('/login', (req, res) => {
     });
   });
 
+
+
+  // Настройка почты (лучше вынести в .env)
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'flakerdead@gmail.com',
+    pass: 'lwxt qcra ygmy nprf'
+  }
+});
+
+router.get('/verify-email', (req, res) => {
+  const { token } = req.query;
+
+  if (!token) return res.status(400).send('Недопустимый токен');
+
+  db.query('SELECT * FROM users WHERE email_verification_token = ?', [token], (err, results) => {
+    if (err || results.length === 0) return res.status(400).send('Недействительный токен');
+
+    const user = results[0];
+    db.query('UPDATE users SET email_verified = 1, email_verification_token = NULL WHERE id = ?', [user.id], (err2) => {
+      if (err2) return res.status(500).send('Ошибка при подтверждении');
+      res.send('Email подтверждён успешно');
+    });
+  });
+  res.redirect('http://localhost:3000/profile?verified=1');
+});
+router.post('/set-email', (req, res) => {
+  const { user_id, email } = req.body;
+  if (!email) return res.status(400).json({ message: 'Email обязателен' });
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const verificationLink = `http://localhost:5000/api/auth/verify-email?token=${token}`;
+
+  // Сохраняем токен в БД — можно отдельную таблицу или временно в `users`
+  db.query('UPDATE users SET email = ?, email_verified = 0, email_verification_token = ? WHERE id = ?', 
+    [email, token, user_id], (err) => {
+    if (err) return res.status(500).json({ message: 'Ошибка при обновлении email' });
+
+    // Отправка письма
+    const mailOptions = {
+      from: 'flakerdead@gmail.com',
+      to: email,
+      subject: 'Подтверждение Email',
+      html: `
+        <p>Здравствуйте!</p>
+        <p>Пожалуйста, подтвердите ваш email, перейдя по следующей ссылке:</p>
+        <p><a href="${verificationLink}" target="_blank">Подтвердить Email</a></p>
+        <p>Если вы не запрашивали подтверждение, просто проигнорируйте это письмо.</p>
+      `
+    };
+
+    transporter.sendMail(mailOptions, (err, info) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Ошибка при отправке письма' });
+      }
+      res.json({ message: 'Письмо отправлено на email' });
+    });
+  });
+});
 module.exports = router;
