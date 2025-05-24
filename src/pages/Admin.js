@@ -22,6 +22,10 @@ function Admin() {
   const [placeMessage, setPlaceMessage] = useState('');
   const [editingPlaceId, setEditingPlaceId] = useState(null);
 
+  const [latitude, setLatitude] = useState('');
+const [longitude, setLongitude] = useState('');
+const [images, setImages] = useState([]);
+
   useEffect(() => {
     if (user?.is_admin === 1) {
       fetchNews();
@@ -74,31 +78,37 @@ function Admin() {
   // === Отправка/редактирование места ===
   const handlePlaceSubmit = async (e) => {
     e.preventDefault();
+  
+    const formData = new FormData();
+    formData.append('title', placeTitle);
+    formData.append('description', description);
+    formData.append('tags', tags);
+    formData.append('latitude', latitude);
+    formData.append('longitude', longitude);
+  
+    images.forEach((file) => {
+      formData.append('images', file); // `images` должен соответствовать backend
+    });
+  
     const url = editingPlaceId
       ? `http://localhost:5000/api/places/${editingPlaceId}`
       : 'http://localhost:5000/api/places';
     const method = editingPlaceId ? 'PUT' : 'POST';
-
+  
     const response = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: placeTitle,
-        description,
-        location,
-        tags,
-        image,
-      }),
+      body: formData,
     });
-
+  
     const data = await response.json();
     if (response.ok) {
       setPlaceMessage(editingPlaceId ? 'Место обновлено!' : 'Место добавлено!');
       setPlaceTitle('');
       setDescription('');
-      setLocation('');
       setTags('');
-      setImage('');
+      setLatitude('');
+      setLongitude('');
+      setImages([]);
       setEditingPlaceId(null);
       fetchPlaces();
     } else {
@@ -184,56 +194,85 @@ function Admin() {
       {/* === Места === */}
       {activeTab === 'places' && (
         <>
-          <form onSubmit={handlePlaceSubmit}>
-            <h3>{editingPlaceId ? 'Редактировать место' : 'Добавить место'}</h3>
-            {placeMessage && <p>{placeMessage}</p>}
-            <input
-              type="text"
-              placeholder="Название"
-              value={placeTitle}
-              onChange={(e) => setPlaceTitle(e.target.value)}
-              required
-              style={{ width: '100%', marginBottom: '0.5rem' }}
-            />
-            <textarea
-              placeholder="Описание"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-              rows={3}
-              style={{ width: '100%', marginBottom: '0.5rem' }}
-            />
-            <input
-              type="text"
-              placeholder="Местоположение"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              required
-              style={{ width: '100%', marginBottom: '0.5rem' }}
-            />
-            <input
-              type="text"
-              placeholder="Теги (через запятую)"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              style={{ width: '100%', marginBottom: '0.5rem' }}
-            />
-            <input
-              type="text"
-              placeholder="URL изображения"
-              value={image}
-              onChange={(e) => setImage(e.target.value)}
-              style={{ width: '100%', marginBottom: '0.5rem' }}
-            />
-            <button type="submit">{editingPlaceId ? 'Обновить' : 'Добавить'}</button>
-          </form>
+          <form onSubmit={handlePlaceSubmit} encType="multipart/form-data">
+          <h3>{editingPlaceId ? 'Редактировать место' : 'Добавить место'}</h3>
+          {placeMessage && <p>{placeMessage}</p>}
+
+          <input
+            type="text"
+            placeholder="Название"
+            value={placeTitle}
+            onChange={(e) => setPlaceTitle(e.target.value)}
+            required
+            style={{ width: '100%', marginBottom: '0.5rem' }}
+          />
+
+          <textarea
+            placeholder="Описание"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+            rows={3}
+            style={{ width: '100%', marginBottom: '0.5rem' }}
+          />
+
+          <input
+            type="text"
+            placeholder="Теги (через запятую)"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            style={{ width: '100%', marginBottom: '0.5rem' }}
+          />
+
+          <input
+            type="number"
+            placeholder="Широта (latitude)"
+            value={latitude}
+            onChange={(e) => setLatitude(e.target.value)}
+            step="any"
+            required
+            style={{ width: '100%', marginBottom: '0.5rem' }}
+          />
+
+          <input
+            type="number"
+            placeholder="Долгота (longitude)"
+            value={longitude}
+            onChange={(e) => setLongitude(e.target.value)}
+            step="any"
+            required
+            style={{ width: '100%', marginBottom: '0.5rem' }}
+          />
+
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(e) => setImages([...e.target.files])}
+            style={{ width: '100%', marginBottom: '0.5rem' }}
+          />
+
+          <button type="submit">{editingPlaceId ? 'Обновить' : 'Добавить'}</button>
+        </form>
 
           <h3>Все места</h3>
           {places.map((p) => (
             <div key={p.id} style={{ borderBottom: '1px solid #ccc', margin: '1rem 0' }}>
+                {p.image && (
+                  <img
+                    src={`http://localhost:5000${p.image}`}
+                    alt={p.title}
+                    style={{
+                      width: '100%',
+                      height: '150px',
+                      objectFit: 'cover',
+                      borderRadius: '6px',
+                      marginTop: '0.5rem'
+                    }}
+                  />
+                )}
               <h4>{p.title}</h4>
               <p>{p.description}</p>
-              <p><strong>Локация:</strong> {p.location}</p>
               <p><strong>Теги:</strong> {p.tags}</p>
               {p.image && <img src={p.image} alt={p.title} style={{ maxWidth: '200px' }} />}
               <div style={{ marginTop: '0.5rem' }}>

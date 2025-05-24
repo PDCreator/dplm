@@ -6,6 +6,7 @@ const likeRoutes = require('./routes/likes');
 const placeRoutes = require('./routes/places');
 const favoritesRoutes = require('./routes/favorites');
 
+
 require('dotenv').config();
 
 
@@ -13,7 +14,7 @@ const app = express();
 // 📌 Добавь это:
 app.use(express.json()); // чтобы читать JSON из body
 app.use(cors());
-
+app.use('/uploads', express.static('uploads'));
 app.use('/api/places', placeRoutes);
 
 app.use('/api/comments', commentRoutes);

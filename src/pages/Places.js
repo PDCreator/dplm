@@ -1,20 +1,53 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import API from '../components/api'; // Если ты хранишь API как в профиле
+import API from '../components/api'; // API базовый путь
 
 function Places() {
   const [places, setPlaces] = useState([]);
+  const [search, setSearch] = useState('');
+  const [tagsInput, setTagsInput] = useState('');
 
-  useEffect(() => {
-    fetch(`${API}/places`)
+  const fetchPlaces = () => {
+    const query = new URLSearchParams();
+    if (search) query.append('search', search);
+    if (tagsInput) query.append('tags', tagsInput);
+
+    fetch(`${API}/places?${query.toString()}`)
       .then(res => res.json())
       .then(data => setPlaces(data))
       .catch(err => console.error('Ошибка при загрузке мест:', err));
+  };
+
+  useEffect(() => {
+    fetchPlaces();
   }, []);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    fetchPlaces();
+  };
 
   return (
     <div style={{ padding: '1rem' }}>
       <h2>Все места</h2>
+
+      <form onSubmit={handleSubmit} style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          placeholder="Поиск по названию или описанию"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ flex: '1 1 200px', padding: '0.5rem' }}
+        />
+        <input
+          type="text"
+          placeholder="Теги (через запятую)"
+          value={tagsInput}
+          onChange={e => setTagsInput(e.target.value)}
+          style={{ flex: '1 1 200px', padding: '0.5rem' }}
+        />
+        <button type="submit" style={{ padding: '0.5rem 1rem' }}>Найти</button>
+      </form>
 
       {places.length > 0 ? (
         <div style={{
@@ -36,7 +69,7 @@ function Places() {
 
               {place.image && (
                 <img
-                  src={`${API}/uploads/${place.image}`} // или place.image напрямую, если ссылка полная
+                  src={`http://localhost:5000${place.image}`}
                   alt={place.title}
                   style={{
                     width: '100%',

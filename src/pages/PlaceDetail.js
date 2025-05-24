@@ -95,14 +95,64 @@ function PlaceDetail() {
     }
   };
 
+  useEffect(() => {
+    if (!place || !window.ymaps || !place.latitude || !place.longitude) return;
+  
+    window.ymaps.ready(() => {
+      const map = new window.ymaps.Map('map', {
+        center: [parseFloat(place.latitude), parseFloat(place.longitude)],
+        zoom: 14,
+      });
+  
+      const placemark = new window.ymaps.Placemark(
+        [parseFloat(place.latitude), parseFloat(place.longitude)],
+        {
+          balloonContent: place.title || place.name,
+        },
+        {
+          preset: 'islands#icon',
+          iconColor: '#ff0000',
+        }
+      );
+  
+      map.geoObjects.add(placemark);
+    });
+  }, [place]);
+    
   if (!place) return <div>Загрузка...</div>;
 
+  
   return (
     <div style={{ padding: '1rem' }}>
       <h2>{place.name}</h2>
       <p>{place.description}</p>
+      {place.images?.length > 0 && (
+        <div style={{
+          display: 'flex',
+          gap: '1rem',
+          marginTop: '1rem',
+          flexWrap: 'wrap'
+        }}>
+          {place.images.map((img, index) => (
+            <img
+              key={index}
+              src={`http://localhost:5000${img}`}
+              alt={`Фото ${index + 1}`}
+              style={{
+                width: '200px',
+                height: '150px',
+                objectFit: 'cover',
+                borderRadius: '6px'
+              }}
+            />
+          ))}
+        </div>
+      )}
       <p><small>Добавлено: {new Date(place.created_at).toLocaleString()}</small></p>
-
+      <div style={{ marginTop: '2rem' }}>
+        <h4>Карта</h4>
+        <div id="map" style={{ width: '100%', height: '300px', borderRadius: '8px' }}></div>
+      </div>
       <div style={{ marginTop: '1rem' }}>
         <button onClick={toggleLike}>
           {likedByUser ? '❤️ Убрать лайк' : '🤍 Лайкнуть'}
