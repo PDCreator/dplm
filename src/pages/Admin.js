@@ -11,6 +11,7 @@ function Admin() {
   const [news, setNews] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [message, setMessage] = useState('');
+  const [selectedPlaceIds, setSelectedPlaceIds] = useState([]);
 
   // === Места ===
   const [places, setPlaces] = useState([]);
@@ -56,11 +57,11 @@ const [images, setImages] = useState([]);
       ? `http://localhost:5000/api/news/${editingId}`
       : 'http://localhost:5000/api/news';
     const method = editingId ? 'PUT' : 'POST';
-
+    console.log(title, content, selectedPlaceIds)
     const response = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content }),
+      body: JSON.stringify({ title, content, placeIds: selectedPlaceIds }),
     });
 
     const data = await response.json();
@@ -172,6 +173,25 @@ const [images, setImages] = useState([]);
               rows={5}
               style={{ width: '100%', marginBottom: '0.5rem' }}
             />
+            <div>
+              <p>Привязать к местам:</p>
+              {places.map((place) => (
+                <label key={place.id} style={{ display: 'block' }}>
+                  <input
+                    type="checkbox"
+                    value={place.id}
+                    checked={selectedPlaceIds.includes(place.id)}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
+                      setSelectedPlaceIds((prev) =>
+                        e.target.checked ? [...prev, value] : prev.filter((id) => id !== value)
+                      );
+                    }}
+                  />
+                  {place.title}
+                </label>
+              ))}
+            </div>
             <button type="submit">{editingId ? 'Обновить' : 'Добавить'}</button>
           </form>
 
