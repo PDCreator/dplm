@@ -24,15 +24,21 @@ function Admin() {
   const [editingPlaceId, setEditingPlaceId] = useState(null);
 
   const [latitude, setLatitude] = useState('');
-const [longitude, setLongitude] = useState('');
-const [images, setImages] = useState([]);
+  const [longitude, setLongitude] = useState('');
+  const [images, setImages] = useState([]);
+
+  // === Пользователи ===
+  const [users, setUsers] = useState([]);
+  const [userSearch, setUserSearch] = useState('');
+  const [editingUser, setEditingUser] = useState(null);
 
   useEffect(() => {
-    if (user?.is_admin === 1) {
-      fetchNews();
-      fetchPlaces();
-    }
-  }, []);
+  if (user?.is_admin === 1) {
+    fetchNews();
+    fetchPlaces();
+    fetchUsers();
+  }
+}, []);
 
   const fetchNews = async () => {
     const res = await fetch('http://localhost:5000/api/news');
@@ -45,6 +51,16 @@ const [images, setImages] = useState([]);
     const data = await res.json();
     setPlaces(data);
   };
+
+  const fetchUsers = async () => {
+  const res = await fetch('http://localhost:5000/api/users');
+  const data = await res.json();
+  setUsers(data);
+  };
+
+  const filteredUsers = users.filter(u =>
+    u.login.toLowerCase().includes(userSearch.toLowerCase())
+  );
 
   if (!user || user.is_admin !== 1) {
     return <div>Нет доступа</div>;
@@ -137,6 +153,33 @@ const [images, setImages] = useState([]);
     }
   };
 
+  // === Обновление пользователя ===
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    const res = await fetch(`http://localhost:5000/api/users/${editingUser.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editingUser),
+    });
+
+    if (res.ok) {
+      fetchUsers();
+      setEditingUser(null);
+    }
+  };
+  // === Удаление пользователя ===
+  const handleDeleteUser = async (id) => {
+    if (!window.confirm('Удалить пользователя?')) return;
+    const res = await fetch(`http://localhost:5000/api/users/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (res.ok) {
+      fetchUsers();
+    }
+  };
+
+
   return (
     <div style={{ padding: '1rem' }}>
       <h2>Админ-панель</h2>
@@ -149,8 +192,58 @@ const [images, setImages] = useState([]);
         <button onClick={() => setActiveTab('places')} disabled={activeTab === 'places'}>
           Места
         </button>
+        <button onClick={() => setActiveTab('users')} disabled={activeTab === 'users'}>
+        Пользователи
+      </button>
       </div>
+        {activeTab === 'users' && (
+        <>
+          <h3>Пользователи</h3>
+          <input
+            type="text"
+            placeholder="Поиск по логину"
+            value={userSearch}
+            onChange={(e) => setUserSearch(e.target.value)}
+            style={{ width: '100%', marginBottom: '1rem' }}
+          />
 
+          {filteredUsers.map((u) => (
+            <div key={u.id} style={{ borderBottom: '1px solid #ccc', padding: '0.5rem 0' }}>
+              <p><strong>Логин:</strong> {u.login}</p>
+              <p><strong>Email:</strong> {u.email}</p>
+              <p><strong>Админ:</strong> {u.is_admin ? 'Да' : 'Нет'}</p>
+              <button onClick={() => setEditingUser(u)}>Редактировать</button>{' '}
+              <button onClick={() => handleDeleteUser(u.id)}>Удалить</button>
+            </div>
+          ))}
+
+          {editingUser && (
+            <form onSubmit={(e) => handleUpdateUser(e)}>
+              <h4>Редактировать пользователя: {editingUser.login}</h4>
+              <input
+                type="email"
+                value={editingUser.email}
+                onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                placeholder="Email"
+                style={{ width: '100%', marginBottom: '0.5rem' }}
+              />
+              <label>
+                <input
+                  type="checkbox"
+                  checked={editingUser.is_admin}
+                  onChange={(e) =>
+                    setEditingUser({ ...editingUser, is_admin: e.target.checked ? 1 : 0 })
+                  }
+                />
+                Админ
+              </label>
+              <br />
+              <button type="submit">Сохранить</button>{' '}
+              <button onClick={() => setEditingUser(null)}>Отмена</button>
+            </form>
+          )}
+        </>
+      )}
       {/* === Новости === */}
       {activeTab === 'news' && (
         <>
