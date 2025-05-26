@@ -1,4 +1,3 @@
-// routes/places.js
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
@@ -6,13 +5,16 @@ const upload = require('../middleware/upload');
 const fs = require('fs');
 const path = require('path');
 
-// Получить все места
+// Получить все места с фильтрацией по поиску и тегам
 router.get('/', (req, res) => {
   const { search, tags } = req.query;
+  const tagIds = tags ? tags.split(',').map(id => parseInt(id)) : [];
+
   let query = `
-    SELECT p.*, 
-           (SELECT image_url FROM place_images WHERE place_id = p.id LIMIT 1) AS image
-    FROM places p 
+    SELECT DISTINCT p.*, 
+      (SELECT image_url FROM place_images WHERE place_id = p.id LIMIT 1) AS image
+    FROM places p
+    LEFT JOIN place_tags pt ON p.id = pt.place_id
     WHERE 1
   `;
   const params = [];
@@ -23,11 +25,10 @@ router.get('/', (req, res) => {
     params.push(s, s);
   }
 
-  if (tags) {
-    const tagsArray = tags.split(',');
-    const tagConditions = tagsArray.map(() => `p.tags LIKE ?`).join(' OR ');
-    query += ` AND (${tagConditions})`;
-    tagsArray.forEach(tag => params.push(`%${tag}%`));
+  if (tagIds.length > 0) {
+    const placeholders = tagIds.map(() => '?').join(',');
+    query += ` AND pt.tag_id IN (${placeholders})`;
+    params.push(...tagIds);
   }
 
   db.query(query, params, (err, results) => {
@@ -35,61 +36,119 @@ router.get('/', (req, res) => {
       console.error('Ошибка при получении мест с фильтрацией:', err);
       return res.status(500).json({ error: 'Ошибка сервера' });
     }
-    res.json(results);
+
+    // Для каждого места загружаем теги
+    if (results.length === 0) return res.json([]);
+
+    const placeIds = results.map(p => p.id);
+    db.query(`
+      SELECT pt.place_id, t.id, t.name 
+      FROM place_tags pt
+      JOIN tags t ON pt.tag_id = t.id
+      WHERE pt.place_id IN (?)
+    `, [placeIds], (tagErr, tagResults) => {
+      if (tagErr) {
+        console.error('Ошибка при загрузке тегов:', tagErr);
+        return res.status(500).json({ error: 'Ошибка при загрузке тегов' });
+      }
+
+      // Группируем теги по place_id
+      const tagsByPlace = tagResults.reduce((acc, item) => {
+        if (!acc[item.place_id]) acc[item.place_id] = [];
+        acc[item.place_id].push({ id: item.id, name: item.name });
+        return acc;
+      }, {});
+
+      // Добавляем теги к местам
+      const placesWithTags = results.map(place => ({
+        ...place,
+        tags: tagsByPlace[place.id] || []
+      }));
+
+      res.json(placesWithTags);
+    });
   });
 });
 
-
 // Добавить новое место
-// POST
 router.post('/', upload.array('images'), (req, res) => {
-  const { title, description, latitude, longitude, tags } = req.body;
+  const { title, description, latitude, longitude, tagIds } = req.body;
   const files = req.files;
-  
+  const parsedTagIds = tagIds ? JSON.parse(tagIds) : [];
+
   db.query(
-    'INSERT INTO places (title, description, latitude, longitude, tags) VALUES (?, ?, ?, ?, ?)',
-    [title, description, latitude, longitude, tags],
+    'INSERT INTO places (title, description, latitude, longitude) VALUES (?, ?, ?, ?)',
+    [title, description, latitude, longitude],
     (err, result) => {
       if (err) {
-        console.error('Ошибка при добавлении места:', err); // <=== добавь это
+        console.error('Ошибка при добавлении места:', err);
         return res.status(500).json({ error: 'Ошибка при добавлении' });
       }
-  
+
       const placeId = result.insertId;
-  
-      // Если есть изображения, добавим их
-      if (files && files.length > 0) {
-        const values = files.map(file => [placeId, `/uploads/${file.filename}`]);
-        db.query(
-          'INSERT INTO place_images (place_id, image_url) VALUES ?',
-          [values],
-          (imgErr) => {
-            if (imgErr) {
-              console.error('Ошибка при сохранении изображений:', imgErr);
-              return res.status(500).json({ error: 'Место добавлено, но изображения не сохранены' });
+
+      const insertTags = () => {
+        if (parsedTagIds.length > 0) {
+          const tagValues = parsedTagIds.map(tagId => [placeId, tagId]);
+          db.query(
+            'INSERT INTO place_tags (place_id, tag_id) VALUES ?',
+            [tagValues],
+            (tagErr) => {
+              if (tagErr) console.error('Ошибка при привязке тегов:', tagErr);
             }
-            res.json({ message: 'Место и изображения добавлены', id: placeId });
-          }
-        );
-      } else {
-        res.json({ message: 'Место добавлено без изображений', id: placeId });
-      }
+          );
+        }
+      };
+
+      const insertImages = () => {
+        if (files && files.length > 0) {
+          const values = files.map(file => [placeId, `/uploads/${file.filename}`]);
+          db.query(
+            'INSERT INTO place_images (place_id, image_url) VALUES ?',
+            [values],
+            (imgErr) => {
+              if (imgErr) {
+                console.error('Ошибка при сохранении изображений:', imgErr);
+                return res.status(500).json({ error: 'Место добавлено, но изображения не сохранены' });
+              }
+              res.json({ message: 'Место и изображения добавлены', id: placeId });
+            }
+          );
+        } else {
+          res.json({ message: 'Место добавлено без изображений', id: placeId });
+        }
+      };
+
+      insertTags();
+      insertImages();
     }
   );
 });
 
 // Обновить место
-// PUT
 router.put('/:id', upload.array('images'), (req, res) => {
   const { id } = req.params;
-  const { title, description, latitude, longitude, tags } = req.body;
+  const { title, description, latitude, longitude, tagIds } = req.body;
   const files = req.files;
+  const parsedTagIds = tagIds ? JSON.parse(tagIds) : [];
 
   db.query(
-    'UPDATE places SET title = ?, description = ?, latitude = ?, longitude = ?, tags = ? WHERE id = ?',
-    [title, description, latitude, longitude, tags, id],
+    'UPDATE places SET title = ?, description = ?, latitude = ?, longitude = ? WHERE id = ?',
+    [title, description, latitude, longitude, id],
     (err) => {
       if (err) return res.status(500).json({ error: 'Ошибка при обновлении' });
+
+      // Обновим теги: сначала удалим старые
+      db.query('DELETE FROM place_tags WHERE place_id = ?', [id], (delErr) => {
+        if (delErr) console.error('Ошибка при удалении старых тегов:', delErr);
+
+        if (parsedTagIds.length > 0) {
+          const tagValues = parsedTagIds.map(tagId => [id, tagId]);
+          db.query('INSERT INTO place_tags (place_id, tag_id) VALUES ?', [tagValues], (insErr) => {
+            if (insErr) console.error('Ошибка при добавлении новых тегов:', insErr);
+          });
+        }
+      });
 
       if (files && files.length > 0) {
         const values = files.map(file => [id, `/uploads/${file.filename}`]);
@@ -110,43 +169,102 @@ router.put('/:id', upload.array('images'), (req, res) => {
     }
   );
 });
-  
+
 // Удалить место
 router.delete('/:id', (req, res) => {
   const { id } = req.params;
-  db.query('DELETE FROM places WHERE id = ?', [id], (err, result) => {
+
+  db.query('DELETE FROM places WHERE id = ?', [id], (err) => {
     if (err) return res.status(500).json({ error: 'Ошибка при удалении' });
-    res.json({ message: 'Место удалено' });
+
+    // Также удалим связи
+    db.query('DELETE FROM place_tags WHERE place_id = ?', [id], () => {});
+    db.query('DELETE FROM place_images WHERE place_id = ?', [id], () => {});
+
+    res.json({ message: 'Место и связанные данные удалены' });
   });
 });
+
+// Получить все теги
+router.get('/tags', (req, res) => {
+  db.query('SELECT id, name FROM tags ORDER BY name', (err, results) => {
+    if (err) return res.status(500).json({ error: 'Ошибка при получении тегов' });
+    res.json(results);
+  });
+});
+
+// Добавить новый тег
+router.post('/tags', (req, res) => {
+  const { name } = req.body;
   
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Название тега обязательно' });
+  }
+
+  // Проверяем, существует ли уже тег с таким именем
+  db.query('SELECT id FROM tags WHERE name = ?', [name.trim()], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Ошибка при проверке тега' });
+    
+    if (results.length > 0) {
+      return res.status(400).json({ error: 'Тег с таким именем уже существует' });
+    }
+
+    // Добавляем новый тег
+    db.query('INSERT INTO tags (name) VALUES (?)', [name.trim()], (err, result) => {
+      if (err) return res.status(500).json({ error: 'Ошибка при добавлении тега' });
+      
+      res.json({
+        id: result.insertId,
+        name: name.trim(),
+        message: 'Тег успешно добавлен'
+      });
+    });
+  });
+});
+
+// Получить названия мест (для автокомплита)
 router.get('/names', (req, res) => {
   db.query('SELECT id, title AS name FROM places ORDER BY title', (err, results) => {
     if (err) return res.status(500).json({ message: 'Ошибка при загрузке мест' });
     res.json(results);
   });
 });
-// Получить конкретное место по ID
+
+// Получить одно место по ID с изображениями и тегами
 router.get('/:id', (req, res) => {
   const { id } = req.params;
 
-  // Сначала получаем основную информацию о месте
   db.query('SELECT * FROM places WHERE id = ?', [id], (err, results) => {
     if (err) return res.status(500).json({ error: 'Ошибка при получении места' });
     if (results.length === 0) return res.status(404).json({ error: 'Место не найдено' });
 
     const place = results[0];
 
-    // Затем получаем все изображения
     db.query('SELECT image_url FROM place_images WHERE place_id = ?', [id], (imgErr, imageResults) => {
       if (imgErr) return res.status(500).json({ error: 'Ошибка при получении изображений' });
 
       place.images = imageResults.map(img => img.image_url);
-      res.json(place);
+
+      db.query('SELECT tag_id FROM place_tags WHERE place_id = ?', [id], (tagErr, tagResults) => {
+        if (tagErr) return res.status(500).json({ error: 'Ошибка при получении тегов' });
+
+        place.tagIds = tagResults.map(t => t.tag_id);
+        
+        // Получаем полную информацию о тегах
+        if (place.tagIds.length > 0) {
+          db.query('SELECT id, name FROM tags WHERE id IN (?)', [place.tagIds], (fullTagErr, fullTagResults) => {
+            if (fullTagErr) return res.status(500).json({ error: 'Ошибка при получении информации о тегах' });
+            
+            place.tags = fullTagResults;
+            res.json(place);
+          });
+        } else {
+          place.tags = [];
+          res.json(place);
+        }
+      });
     });
   });
 });
-
-
 
 module.exports = router;
