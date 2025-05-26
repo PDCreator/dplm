@@ -117,4 +117,20 @@ router.get('/:id', (req, res) => {
   });
 });
 
+// 🔍 Получить новости по месту
+router.get('/by-place/:placeId', (req, res) => {
+  const { placeId } = req.params;
+  const query = `
+    SELECT n.* FROM news n
+    JOIN news_places np ON np.news_id = n.id
+    WHERE np.place_id = ?
+    ORDER BY n.created_at DESC
+  `;
+  db.query(query, [placeId], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Ошибка при загрузке новостей' });
+    res.json(results);
+  });
+});
+
+
 module.exports = router;

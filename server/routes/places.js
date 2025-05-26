@@ -111,15 +111,21 @@ router.put('/:id', upload.array('images'), (req, res) => {
   );
 });
   
-  // Удалить место
-  router.delete('/:id', (req, res) => {
-    const { id } = req.params;
-    db.query('DELETE FROM places WHERE id = ?', [id], (err, result) => {
-      if (err) return res.status(500).json({ error: 'Ошибка при удалении' });
-      res.json({ message: 'Место удалено' });
-    });
+// Удалить место
+router.delete('/:id', (req, res) => {
+  const { id } = req.params;
+  db.query('DELETE FROM places WHERE id = ?', [id], (err, result) => {
+    if (err) return res.status(500).json({ error: 'Ошибка при удалении' });
+    res.json({ message: 'Место удалено' });
   });
+});
   
+router.get('/names', (req, res) => {
+  db.query('SELECT id, title AS name FROM places ORDER BY title', (err, results) => {
+    if (err) return res.status(500).json({ message: 'Ошибка при загрузке мест' });
+    res.json(results);
+  });
+});
 // Получить конкретное место по ID
 router.get('/:id', (req, res) => {
   const { id } = req.params;
@@ -140,5 +146,7 @@ router.get('/:id', (req, res) => {
     });
   });
 });
+
+
 
 module.exports = router;
