@@ -1,0 +1,19 @@
+{
+  "profile": {
+    "title": "Профиль {{username}}",
+    "welcome": "Добро пожаловать, {{username}}!",
+    "email": "Email",
+    "emailPlaceholder": "Введите email",
+    "emailStatus": {
+      "verified": "✅ Подтверждён",
+      "notVerified": "❗ Не подтверждён (Письмо отправлено)"
+    },
+    "favorites": "Ваши избранные места",
+    "noFavorites": "У вас пока нет избранных мест",
+    "buttons": {
+      "save": "Сохранить",
+      "changeEmail": "Изменить email",
+      "removeFavorite": "Удалить из избранного"
+    }
+  }
+}

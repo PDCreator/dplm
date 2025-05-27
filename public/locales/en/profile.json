@@ -1,0 +1,19 @@
+{
+  "profile": {
+    "title": "{{username}}'s Profile",
+    "welcome": "Welcome, {{username}}!",
+    "email": "Email",
+    "emailPlaceholder": "Enter email",
+    "emailStatus": {
+      "verified": "✅ Verified",
+      "notVerified": "❗ Not verified (Email sent)"
+    },
+    "favorites": "Your favorite places",
+    "noFavorites": "You don't have favorite places yet",
+    "buttons": {
+      "save": "Save",
+      "changeEmail": "Change email",
+      "removeFavorite": "Remove from favorites"
+    }
+  }
+}

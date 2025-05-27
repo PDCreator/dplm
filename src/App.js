@@ -9,6 +9,7 @@ import Register from './pages/Register';
 import NewsDetail from './pages/NewsDetail';
 import PlaceDetail from './pages/PlaceDetail';
 import { useAuth } from './AuthContext';
+import './i18n'; // Добавляем импорт i18n
 function App() {
   const { user, logout, isLoading } = useAuth();
 

@@ -1,0 +1,22 @@
+{
+  "navbar": {
+    "news": "Новости",
+    "places": "Места",
+    "profile": "Профиль",
+    "admin": "Админка",
+    "logout": "Выйти",
+    "login": "Вход",
+    "register": "Регистрация"
+  },
+  "buttons": {
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "changeEmail": "Изменить email",
+    "removeFavorite": "Удалить из избранного"
+  },
+  "messages": {
+    "loginRequired": "Для доступа к профилю, пожалуйста, войдите",
+    "emailVerified": "Email успешно подтверждён!",
+    "emailNotVerified": "Email не подтверждён"
+  }
+}

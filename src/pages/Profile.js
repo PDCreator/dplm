@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext';
+import { useTranslation } from 'react-i18next';
 import API from '../components/api';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import '../styles/Profile.css'; // или добавить стили в существующий CSS файл
+import '../styles/Profile.css';
 
 function Profile() {
+  const { t } = useTranslation( 'profile', 'common');
   const { user } = useAuth();
   const [favorites, setFavorites] = useState([]);
   const [email, setEmail] = useState('');
@@ -17,12 +19,10 @@ function Profile() {
 
   useEffect(() => {
     if (user) {
-      // Получить избранное
       fetch(`${API}/favorites/user/${user.id}`)
         .then(res => res.json())
         .then(setFavorites);
 
-      // Получить email и статус
       fetch(`${API}/users/${user.id}`)
         .then(res => res.json())
         .then(data => {
@@ -32,19 +32,17 @@ function Profile() {
     }
   }, [user]);
 
-  // Обработка запроса с флага ?verified=1
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('verified') === '1') {
-      setMessage('Email успешно подтверждён!');
+      setMessage(t('messages.emailVerified'));
       setEmailVerified(true);
-      // Удаляем параметр из URL
       navigate('/profile', { replace: true });
     }
-  }, [location, navigate]);
+  }, [location, navigate, t]);
 
   const removeFromFavorites = async (placeId) => {
-    if (!user) return alert('Войдите, чтобы удалить место из избранного');
+    if (!user) return alert(t('messages.loginRequired'));
 
     const res = await fetch(`${API}/favorites/${placeId}`, {
       method: 'DELETE',
@@ -69,40 +67,46 @@ function Profile() {
     setEditingEmail(false);
   };
 
-  if (!user) return <div>Для доступа к профилю, пожалуйста, войдите.</div>;
+  if (!user) return <div>{t('messages.loginRequired')}</div>;
 
   return (
     <div className="page-container">
       <div className="profile-header">
-        <h1>{user.username}'s Профиль</h1>
-        <p className="welcome-message">Добро пожаловать, {user.username}!</p>
+        <h1>{t('profile.title', { username: user.username })}</h1>
+        <p className="welcome-message">
+          {t('profile.welcome', { username: user.username })}
+        </p>
       </div>
 
       <div className="email-section">
-        <h3>Email:</h3>
+        <h3>{t('profile.email')}</h3>
         {editingEmail || !emailVerified ? (
           <form onSubmit={handleEmailSubmit} className="email-form">
             <input
               type="email"
-              placeholder="Введите email"
+              placeholder={t('profile.emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-            <button type="submit" className="btn">Сохранить</button>
+            <button type="submit" className="btn">
+              {t('profile.buttons.save')}
+            </button>
           </form>
         ) : (
           <div>
-            <p>Email: {email}</p>
+            <p>{t('profile.email')}: {email}</p>
             <div className={`email-status ${emailVerified ? 'verified' : 'not-verified'}`}>
-              {emailVerified ? '✅ Подтверждён' : '❗ Не подтверждён (Письмо отправлено)'}
+              {emailVerified 
+                ? t('profile.emailStatus.verified') 
+                : t('profile.emailStatus.notVerified')}
             </div>
             <div className="email-actions">
               <button 
                 onClick={() => setEditingEmail(true)} 
                 className="btn-outline"
               >
-                Изменить email
+                {t('profile.buttons.changeEmail')}
               </button>
             </div>
           </div>
@@ -115,7 +119,7 @@ function Profile() {
       </div>
 
       <div className="favorites-section">
-        <h3>Ваши избранные места:</h3>
+        <h3>{t('profile.favorites')}</h3>
         {favorites.length > 0 ? (
           <div className="favorites-grid">
             {favorites.map(place => (
@@ -136,14 +140,14 @@ function Profile() {
                   onClick={() => removeFromFavorites(place.id)}
                   className="remove-favorite-btn"
                 >
-                  Удалить из избранного
+                  {t('profile.buttons.removeFavorite')}
                 </button>
               </div>
             ))}
           </div>
         ) : (
           <div className="empty-favorites">
-            <p>У вас пока нет избранных мест.</p>
+            <p>{t('profile.noFavorites')}</p>
           </div>
         )}
       </div>

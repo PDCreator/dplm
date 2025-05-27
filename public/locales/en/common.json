@@ -1,0 +1,22 @@
+{
+  "navbar": {
+    "news": "News",
+    "places": "Places",
+    "profile": "Profile",
+    "admin": "Admin",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register"
+  },
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "changeEmail": "Change email",
+    "removeFavorite": "Remove favorite"
+  },
+  "messages": {
+    "loginRequired": "Please login to access profile",
+    "emailVerified": "Email successfully verified!",
+    "emailNotVerified": "Email not verified"
+  }
+}
