@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../AuthContext';
 import { useNavigate } from 'react-router-dom';
+import '../styles/Register.css'; // Создай этот файл
 function Register() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -60,32 +61,39 @@ function Register() {
   };
 
   return (
-    <div>
-      <h2>Регистрация</h2>
-      <form onSubmit={handleRegister}>
-        <input
-          type="text"
-          placeholder="Логин"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        /><br />
-        <input
-          type="password"
-          placeholder="Пароль"
-          value={password}
-          autoComplete="off"
-          onChange={(e) => setPassword(e.target.value)}
-        /><br />
-        <input
-          type="password"
-          placeholder="Повторите пароль"
-          value={confirmPassword}
-          autoComplete="off"
-          onChange={(e) => setConfirmPassword(e.target.value)}
-        /><br />
-        <button type="submit">Зарегистрироваться</button>
-      </form>
-      {message && <p>{message}</p>}
+    <div className="register-container">
+      <div className="register-card">
+        <h2 className="register-title">Регистрация</h2>
+        <form onSubmit={handleRegister} className="register-form">
+          <input
+            type="text"
+            placeholder="Логин"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="register-input"
+          />
+          <input
+            type="password"
+            placeholder="Пароль"
+            value={password}
+            autoComplete="off"
+            onChange={(e) => setPassword(e.target.value)}
+            className="register-input"
+          />
+          <input
+            type="password"
+            placeholder="Повторите пароль"
+            value={confirmPassword}
+            autoComplete="off"
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="register-input"
+          />
+          <button type="submit" className="register-button">
+            Зарегистрироваться
+          </button>
+        </form>
+        {message && <p className={`register-message ${message.includes('Добро пожаловать') ? 'success' : 'error'}`}>{message}</p>}
+      </div>
     </div>
   );
 }

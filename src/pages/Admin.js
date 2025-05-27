@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../AuthContext';
+import '../styles/Admin.css'; // Создай этот файл
 
 function Admin() {
   const { user } = useAuth();
@@ -292,150 +293,198 @@ function Admin() {
     }
   };
 
-  return (
-    <div style={{ padding: '1rem' }}>
-      <h2>Админ-панель</h2>
+return (
+  <div className="admin-container">
+    <div className="admin-card">
+      <h2 className="admin-title">Админ-панель</h2>
 
       {/* Вкладки */}
-      <div style={{ marginBottom: '1rem' }}>
-        <button onClick={() => setActiveTab('news')} disabled={activeTab === 'news'}>
+      <div className="admin-tabs">
+        <button 
+          onClick={() => setActiveTab('news')} 
+          className={`admin-tab ${activeTab === 'news' ? 'active' : ''}`}
+        >
           Новости
-        </button>{' '}
-        <button onClick={() => setActiveTab('places')} disabled={activeTab === 'places'}>
+        </button>
+        <button 
+          onClick={() => setActiveTab('places')} 
+          className={`admin-tab ${activeTab === 'places' ? 'active' : ''}`}
+        >
           Места
-        </button>{' '}
-        <button onClick={() => setActiveTab('users')} disabled={activeTab === 'users'}>
+        </button>
+        <button 
+          onClick={() => setActiveTab('users')} 
+          className={`admin-tab ${activeTab === 'users' ? 'active' : ''}`}
+        >
           Пользователи
         </button>
       </div>
 
       {/* === Новости === */}
       {activeTab === 'news' && (
-        <>
-          <form onSubmit={handleNewsSubmit}>
-            <h3>{editingId ? 'Редактировать новость' : 'Добавить новость'}</h3>
-            {message && <p>{message}</p>}
+        <div className="admin-section">
+          <form onSubmit={handleNewsSubmit} className="admin-form">
+            <h3 className="admin-subtitle">
+              {editingId ? 'Редактировать новость' : 'Добавить новость'}
+            </h3>
+            {message && <p className={`admin-message ${message.includes('!') ? 'success' : 'error'}`}>{message}</p>}
+            
             <input
               type="text"
               placeholder="Заголовок"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              style={{ width: '100%', marginBottom: '0.5rem' }}
+              className="admin-input"
             />
+            
             <textarea
               placeholder="Содержимое"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               required
               rows={5}
-              style={{ width: '100%', marginBottom: '0.5rem' }}
+              className="admin-textarea"
             />
-            <div>
+            
+            <div className="admin-checkbox-group">
               <p>Привязать к местам:</p>
-              {places.map((place) => (
-                <label key={place.id} style={{ marginRight: 10 }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedPlaceIds.includes(place.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedPlaceIds([...selectedPlaceIds, place.id]);
-                      } else {
-                        setSelectedPlaceIds(selectedPlaceIds.filter(id => id !== place.id));
-                      }
-                    }}
-                  />{' '}
-                  {place.title}
-                </label>
-              ))}
+              <div className="admin-checkboxes">
+                {places.map((place) => (
+                  <label key={place.id} className="admin-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={selectedPlaceIds.includes(place.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedPlaceIds([...selectedPlaceIds, place.id]);
+                        } else {
+                          setSelectedPlaceIds(selectedPlaceIds.filter(id => id !== place.id));
+                        }
+                      }}
+                      className="admin-checkbox"
+                    />{' '}
+                    {place.title}
+                  </label>
+                ))}
+              </div>
             </div>
-            <button type="submit" style={{ marginTop: 10 }}>
-              {editingId ? 'Сохранить' : 'Добавить'}
-            </button>{' '}
-            {editingId && (
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingId(null);
-                  setTitle('');
-                  setContent('');
-                  setSelectedPlaceIds([]);
-                  setMessage('');
-                }}
-              >
-                Отмена
+            
+            <div className="admin-form-actions">
+              <button type="submit" className="admin-button primary">
+                {editingId ? 'Сохранить' : 'Добавить'}
               </button>
-            )}
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingId(null);
+                    setTitle('');
+                    setContent('');
+                    setSelectedPlaceIds([]);
+                    setMessage('');
+                  }}
+                  className="admin-button"
+                >
+                  Отмена
+                </button>
+              )}
+            </div>
           </form>
 
-          <h3>Список новостей</h3>
-          <ul>
+          <h3 className="admin-subtitle">Список новостей</h3>
+          <div className="admin-list">
             {news.map((item) => (
-              <li key={item.id} style={{ marginBottom: 10 }}>
-                <b>{item.title}</b>{' '}
-                <button onClick={() => handleEditNews(item)}>Редактировать</button>{' '}
-                <button onClick={() => handleDeleteNews(item.id)}>Удалить</button>
-                <p>{item.content}</p>
+              <div key={item.id} className="admin-list-item">
+                <div className="admin-list-item-header">
+                  <h4>{item.title}</h4>
+                  <div className="admin-list-item-actions">
+                    <button 
+                      onClick={() => handleEditNews(item)} 
+                      className="admin-button small"
+                    >
+                      Редактировать
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteNews(item.id)} 
+                      className="admin-button small danger"
+                    >
+                      Удалить
+                    </button>
+                  </div>
+                </div>
+                <p className="admin-list-item-content">{item.content}</p>
                 {item.places?.length > 0 && (
-                  <p>
-                    Связанные места:{' '}
+                  <p className="admin-list-item-places">
+                    <strong>Связанные места:</strong>{' '}
                     {item.places.map((p) => p.title).join(', ')}
                   </p>
                 )}
-              </li>
+              </div>
             ))}
-          </ul>
-        </>
+          </div>
+        </div>
       )}
 
       {/* === Места === */}
       {activeTab === 'places' && (
-        <>
-          <form onSubmit={handlePlaceSubmit}>
-            <h3>{editingPlaceId ? 'Редактировать место' : 'Добавить место'}</h3>
-            {placeMessage && <p>{placeMessage}</p>}
+        <div className="admin-section">
+                      {/* Новый тег */}
+            <div className="admin-new-tag">
+              <label>Добавить новый тег в базу данных:</label>
+              <div className="admin-new-tag-input">
+                <input
+                  type="text"
+                  placeholder="Название нового тега"
+                  value={newTagName}
+                  onChange={(e) => setNewTagName(e.target.value)}
+                  className="admin-input"
+                />
+                <button 
+                  type="button" 
+                  onClick={handleAddNewTag}
+                  disabled={!newTagName.trim()}
+                  className="admin-button small"
+                >
+                  Добавить
+                </button>
+              </div>
+            </div>
+          <form onSubmit={handlePlaceSubmit} className="admin-form">
+            <h3 className="admin-subtitle">
+              {editingPlaceId ? 'Редактировать место' : 'Добавить место'}
+            </h3>
+            {placeMessage && <p className={`admin-message ${placeMessage.includes('!') ? 'success' : 'error'}`}>{placeMessage}</p>}
+            
             <input
               type="text"
               placeholder="Название места"
               value={placeTitle}
               onChange={(e) => setPlaceTitle(e.target.value)}
               required
-              style={{ width: '100%', marginBottom: '0.5rem' }}
+              className="admin-input"
             />
+            
             <textarea
               placeholder="Описание"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               required
               rows={4}
-              style={{ width: '100%', marginBottom: '0.5rem' }}
+              className="admin-textarea"
             />
 
-            <div style={{ marginBottom: '0.5rem', position: 'relative' }}>
+            {/* Теги */}
+            <div className="admin-tags-container">
               <label>Теги:</label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', margin: '0.5rem 0' }}>
+              <div className="admin-tags-selected">
                 {selectedTags.map(tag => (
-                  <span 
-                    key={tag.id} 
-                    style={{
-                      background: '#eee',
-                      padding: '0.2rem 0.5rem',
-                      borderRadius: '4px',
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}
-                  >
+                  <span key={tag.id} className="admin-tag">
                     {tag.name}
                     <button 
                       type="button" 
                       onClick={() => handleTagRemove(tag.id)}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        marginLeft: '0.5rem',
-                        cursor: 'pointer'
-                      }}
+                      className="admin-tag-remove"
                     >
                       ×
                     </button>
@@ -449,34 +498,16 @@ function Admin() {
                 value={tagsInput}
                 onChange={handleTagsInputChange}
                 onFocus={() => tagsInput.length > 0 && setShowTagDropdown(true)}
-                style={{ width: '100%' }}
+                className="admin-input"
               />
               
               {showTagDropdown && (
-                <ul style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  background: 'white',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  maxHeight: '200px',
-                  overflowY: 'auto',
-                  zIndex: 1000,
-                  margin: 0,
-                  padding: 0,
-                  listStyle: 'none'
-                }}>
+                <ul className="admin-tags-dropdown">
                   {filteredTags.map(tag => (
                     <li 
                       key={tag.id}
                       onClick={() => handleTagSelect(tag)}
-                      style={{
-                        padding: '0.5rem',
-                        cursor: 'pointer',
-                        borderBottom: '1px solid #eee'
-                      }}
+                      className="admin-tags-dropdown-item"
                     >
                       {tag.name}
                     </li>
@@ -485,43 +516,29 @@ function Admin() {
               )}
             </div>
 
-            <div style={{ marginBottom: '0.5rem' }}>
-              <label>Добавить новый тег:</label>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <input
-                  type="text"
-                  placeholder="Название нового тега"
-                  value={newTagName}
-                  onChange={(e) => setNewTagName(e.target.value)}
-                  style={{ flex: 1 }}
-                />
-                <button 
-                  type="button" 
-                  onClick={handleAddNewTag}
-                  disabled={!newTagName.trim()}
-                >
-                  Добавить
-                </button>
-              </div>
+
+
+            {/* Координаты */}
+            <div className="admin-coords">
+              <input
+                type="text"
+                placeholder="Широта"
+                value={latitude}
+                onChange={(e) => setLatitude(e.target.value)}
+                className="admin-input half"
+              />
+              <input
+                type="text"
+                placeholder="Долгота"
+                value={longitude}
+                onChange={(e) => setLongitude(e.target.value)}
+                className="admin-input half"
+              />
             </div>
 
-            <input
-              type="text"
-              placeholder="Широта"
-              value={latitude}
-              onChange={(e) => setLatitude(e.target.value)}
-              style={{ width: '49%', marginRight: '2%', marginBottom: '0.5rem' }}
-            />
-            <input
-              type="text"
-              placeholder="Долгота"
-              value={longitude}
-              onChange={(e) => setLongitude(e.target.value)}
-              style={{ width: '49%', marginBottom: '0.5rem' }}
-            />
-
-            <div>
-              <p>Загрузить изображения (можно несколько):</p>
+            {/* Изображения */}
+            <div className="admin-images">
+              <label>Загрузить изображения (можно несколько):</label>
               <input
                 type="file"
                 multiple
@@ -532,36 +549,26 @@ function Admin() {
                     setImages(Array.from(files));
                   }
                 }}
+                className="admin-file-input"
               />
             </div>
 
-            {/* Показать существующие изображения (если редактируем) */}
+            {/* Существующие изображения */}
             {existingImages.length > 0 && (
-              <div style={{ marginTop: '0.5rem' }}>
+              <div className="admin-existing-images">
                 <p>Существующие изображения:</p>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <div className="admin-images-grid">
                   {existingImages.map((imgUrl, i) => (
-                    <div key={i} style={{ position: 'relative' }}>
+                    <div key={i} className="admin-image-item">
                       <img
                         src={`http://localhost:5000/${imgUrl}`}
                         alt="img"
-                        style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 4 }}
+                        className="admin-image"
                       />
                       <button
                         type="button"
                         onClick={() => handleRemoveExistingImage(imgUrl)}
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          right: 0,
-                          background: 'rgba(255,0,0,0.7)',
-                          border: 'none',
-                          color: 'white',
-                          borderRadius: '50%',
-                          width: 20,
-                          height: 20,
-                          cursor: 'pointer',
-                        }}
+                        className="admin-image-remove"
                         title="Удалить изображение"
                       >
                         ×
@@ -572,10 +579,11 @@ function Admin() {
               </div>
             )}
 
+            {/* Выбранные для загрузки изображения */}
             {images.length > 0 && (
-              <div style={{ marginTop: '0.5rem' }}>
+              <div className="admin-selected-images">
                 <p>Выбранные для загрузки изображения:</p>
-                <ul>
+                <ul className="admin-images-list">
                   {images.map((file, i) => (
                     <li key={i}>{file.name}</li>
                   ))}
@@ -583,65 +591,117 @@ function Admin() {
               </div>
             )}
 
-            <button type="submit" style={{ marginTop: 10 }}>
-              {editingPlaceId ? 'Сохранить' : 'Добавить'}
-            </button>{' '}
-            {editingPlaceId && (
-              <button type="button" onClick={resetPlaceForm}>
-                Отмена
+            <div className="admin-form-actions">
+              <button type="submit" className="admin-button primary">
+                {editingPlaceId ? 'Сохранить' : 'Добавить'}
               </button>
-            )}
+              {editingPlaceId && (
+                <button 
+                  type="button" 
+                  onClick={resetPlaceForm}
+                  className="admin-button"
+                >
+                  Отмена
+                </button>
+              )}
+            </div>
           </form>
 
-          <h3>Список мест</h3>
-          <ul>
+          <h3 className="admin-subtitle">Список мест</h3>
+          <div className="admin-list">
             {places.map((p) => (
-              <li key={p.id} style={{ marginBottom: 15 }}>
-                <b>{p.title}</b> — Теги: {selectedTags.filter(t => p.tagIds?.includes(t.id)).map(t => t.name).join(', ')} — Координаты: {p.latitude}, {p.longitude}{' '}
-                <button onClick={() => handleEditPlace(p)}>Редактировать</button>{' '}
-                <button onClick={() => handleDeletePlace(p.id)}>Удалить</button>
-                <p>{p.description}</p>
-                {/* Показываем миниатюры */}
-                <div style={{ display: 'flex', gap: 10 }}>
-                  {p.images?.map((imgUrl, i) => (
-                    <img
-                      key={i}
-                      src={`http://localhost:5000/${imgUrl}`}
-                      alt="img"
-                      style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 4 }}
-                    />
-                  ))}
+              <div key={p.id} className="admin-list-item">
+                <div className="admin-list-item-header">
+                  <h4>{p.title}</h4>
+                  <div className="admin-list-item-actions">
+                    <button 
+                      onClick={() => handleEditPlace(p)} 
+                      className="admin-button small"
+                    >
+                      Редактировать
+                    </button>
+                    <button 
+                      onClick={() => handleDeletePlace(p.id)} 
+                      className="admin-button small danger"
+                    >
+                      Удалить
+                    </button>
+                  </div>
                 </div>
-              </li>
+                <p className="admin-list-item-content">
+                  <strong>Описание:</strong> {p.description}
+                </p>
+                <p className="admin-list-item-meta">
+                  <strong>Теги:</strong> {selectedTags.filter(t => p.tagIds?.includes(t.id)).map(t => t.name).join(', ')}
+                </p>
+                <p className="admin-list-item-meta">
+                  <strong>Координаты:</strong> {p.latitude}, {p.longitude}
+                </p>
+                {p.images?.length > 0 && (
+                  <div className="admin-list-item-images">
+                    <strong>Изображения:</strong>
+                    <div className="admin-images-grid">
+                      {p.images.map((imgUrl, i) => (
+                        <img
+                          key={i}
+                          src={`http://localhost:5000/${imgUrl}`}
+                          alt="img"
+                          className="admin-image"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             ))}
-          </ul>
-        </>
+          </div>
+        </div>
       )}
 
       {/* === Пользователи === */}
       {activeTab === 'users' && (
-        <>
-          <h3>Пользователи</h3>
+        <div className="admin-section">
+          <h3 className="admin-subtitle">Пользователи</h3>
           <input
             type="text"
             placeholder="Поиск по логину"
             value={userSearch}
             onChange={(e) => setUserSearch(e.target.value)}
-            style={{ marginBottom: '1rem', width: '50%' }}
+            className="admin-input search"
           />
-          <ul>
+          
+          <div className="admin-list">
             {filteredUsers.map((u) => (
-              <li key={u.id} style={{ marginBottom: 10 }}>
-                <b>{u.login}</b> — Email: {u.email} — Admin: {u.is_admin ? 'Да' : 'Нет'}{' '}
-                <button onClick={() => setEditingUser({ ...u })}>Редактировать</button>{' '}
-                <button onClick={() => handleDeleteUser(u.id)}>Удалить</button>
-              </li>
+              <div key={u.id} className="admin-list-item">
+                <div className="admin-list-item-header">
+                  <h4>
+                    {u.login} <span className="admin-user-email">({u.email})</span>
+                  </h4>
+                  <div className="admin-list-item-actions">
+                    <button 
+                      onClick={() => setEditingUser({ ...u })} 
+                      className="admin-button small"
+                    >
+                      Редактировать
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteUser(u.id)} 
+                      className="admin-button small danger"
+                    >
+                      Удалить
+                    </button>
+                  </div>
+                </div>
+                <p className="admin-list-item-meta">
+                  <strong>Статус:</strong> {u.is_admin ? 'Администратор' : 'Пользователь'}
+                </p>
+              </div>
             ))}
-          </ul>
+          </div>
 
           {editingUser && (
-            <form onSubmit={handleUpdateUser} style={{ marginTop: '1rem' }}>
-              <h3>Редактировать пользователя</h3>
+            <form onSubmit={handleUpdateUser} className="admin-form">
+              <h3 className="admin-subtitle">Редактировать пользователя</h3>
               <input
                 type="text"
                 value={editingUser.login}
@@ -650,7 +710,7 @@ function Admin() {
                 }
                 required
                 placeholder="Логин"
-                style={{ marginBottom: '0.5rem', width: '100%' }}
+                className="admin-input"
               />
               <input
                 type="email"
@@ -659,9 +719,9 @@ function Admin() {
                   setEditingUser((prev) => ({ ...prev, email: e.target.value }))
                 }
                 placeholder="Email"
-                style={{ marginBottom: '0.5rem', width: '100%' }}
+                className="admin-input"
               />
-              <label>
+              <label className="admin-checkbox-label">
                 <input
                   type="checkbox"
                   checked={editingUser.is_admin === 1 || editingUser.is_admin === true}
@@ -671,22 +731,30 @@ function Admin() {
                       is_admin: e.target.checked ? 1 : 0,
                     }))
                   }
+                  className="admin-checkbox"
                 />{' '}
                 Администратор
               </label>
-              <br />
-              <button type="submit" style={{ marginTop: 10 }}>
-                Сохранить
-              </button>{' '}
-              <button type="button" onClick={() => setEditingUser(null)}>
-                Отмена
-              </button>
+              
+              <div className="admin-form-actions">
+                <button type="submit" className="admin-button primary">
+                  Сохранить
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setEditingUser(null)}
+                  className="admin-button"
+                >
+                  Отмена
+                </button>
+              </div>
             </form>
           )}
-        </>
+        </div>
       )}
     </div>
-  );
+  </div>
+);
 }
 
 export default Admin;

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '../AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import '../styles/Login.css'; // Создай этот файл
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -33,24 +35,37 @@ function Login() {
   };
 
   return (
-    <div>
-      <h2>Вход</h2>
-      <form onSubmit={handleLogin}>
-        <input
-          type="text"
-          placeholder="Логин"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        /><br />
-        <input
-          type="password"
-          placeholder="Пароль"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        /><br />
-        <button type="submit">Войти</button>
-      </form>
-      {message && <p>{message}</p>}
+    <div className="login-container">
+      <div className="login-card">
+        <h2 className="login-title">Вход в систему</h2>
+        <form onSubmit={handleLogin} className="login-form">
+          <input
+            type="text"
+            placeholder="Логин"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="login-input"
+          />
+          <input
+            type="password"
+            placeholder="Пароль"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="login-input"
+          />
+          <button type="submit" className="login-button">
+            Войти
+          </button>
+        </form>
+        <div className="login-footer">
+          Нет аккаунта? <Link to="/register" className="login-link">Зарегистрироваться</Link>
+        </div>
+        {message && (
+          <p className={`login-message ${message.includes('Добро пожаловать') ? 'success' : 'error'}`}>
+            {message}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
