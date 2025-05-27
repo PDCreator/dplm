@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Select from 'react-select';
-
+import '../styles/News.css'; // или добавить стили в существующий CSS файл
 function News() {
   const [newsList, setNewsList] = useState([]);
   const [places, setPlaces] = useState([]);
@@ -42,96 +42,69 @@ function News() {
   };
 
   return (
-    <div style={{ padding: '1rem' }}>
-      <h2>Новости</h2>
-
-      <div style={{ maxWidth: 400, marginBottom: '1rem' }}>
-        <Select
-          options={places}
-          value={selectedPlace}
-          onChange={handlePlaceChange}
-          isClearable
-          placeholder="Фильтр по месту..."
-        />
+    <div className="page-container">
+      <div className="header-with-filter">
+        <h1>Новости</h1>
+        <div className="filter-container">
+          <Select
+            options={places}
+            value={selectedPlace}
+            onChange={handlePlaceChange}
+            isClearable
+            placeholder="Фильтр по месту..."
+            className="place-select"
+            classNamePrefix="select"
+          />
+        </div>
       </div>
 
       {loading ? (
-        <p>Загрузка новостей...</p>
+        <div className="loading-spinner">Загрузка новостей...</div>
       ) : newsList.length === 0 ? (
-        <p>Пока нет новостей</p>
+        <div className="empty-state">
+          <p>Пока нет новостей</p>
+        </div>
       ) : (
-        newsList.map(news => (
-          <div key={news.id} style={{ 
-            borderBottom: '1px solid #ccc', 
-            marginBottom: '1rem',
-            padding: '1rem',
-            borderRadius: '8px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <Link to={`/news/${news.id}`} style={{ textDecoration: 'none' }}>
-              <h3 style={{ marginTop: 0 }}>{news.title}</h3>
-            </Link>
-            <p>{news.content}</p>
-            <small>{new Date(news.created_at).toLocaleString()}</small>
-            
-            {news.places && news.places.length > 0 && (
-              <div style={{ marginTop: '1rem' }}>
-                <h4>Связанные места:</h4>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                  gap: '1rem',
-                  marginTop: '0.5rem'
-                }}>
-                  {news.places.map(place => (
-                    <Link 
-                      key={place.id} 
-                      to={`/places/${place.id}`}
-                      style={{
-                        textDecoration: 'none',
-                        color: 'inherit',
-                        border: '1px solid #eee',
-                        borderRadius: '6px',
-                        padding: '0.5rem',
-                        transition: 'transform 0.2s',
-                        ':hover': {
-                          transform: 'translateY(-2px)',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                        }
-                      }}
-                    >
-                      {place.image && (
-                        <img
-                          src={`http://localhost:5000${place.image}`}
-                          alt={place.title}
-                          style={{
-                            width: '100%',
-                            height: '120px',
-                            objectFit: 'cover',
-                            borderRadius: '4px'
-                          }}
-                        />
-                      )}
-                      <h5 style={{ margin: '0.5rem 0 0 0' }}>{place.title}</h5>
-                      <p style={{
-                        margin: '0.3rem 0',
-                        fontSize: '0.8rem',
-                        color: '#666',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}>
-                        {place.description}
-                      </p>
-                    </Link>
-                  ))}
+        <div className="news-grid">
+          {newsList.map(news => (
+            <article key={news.id} className="news-card">
+              <Link to={`/news/${news.id}`} className="news-link">
+                <h2 className="news-title">{news.title}</h2>
+              </Link>
+              <p className="news-content">{news.content}</p>
+              <time className="news-date">
+                {new Date(news.created_at).toLocaleString()}
+              </time>
+              
+              {news.places && news.places.length > 0 && (
+                <div className="related-places">
+                  <h3 className="related-places-title">Связанные места:</h3>
+                  <div className="places-grid">
+                    {news.places.map(place => (
+                      <Link 
+                        key={place.id} 
+                        to={`/places/${place.id}`}
+                        className="place-card"
+                      >
+                        {place.image && (
+                          <img
+                            src={`http://localhost:5000${place.image}`}
+                            alt={place.title}
+                            className="place-image"
+                          />
+                        )}
+                        <h4 className="place-title">{place.title}</h4>
+                        <p className="place-description">
+                          {place.description}
+                        </p>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        ))
+              )}
+            </article>
+          ))}
+        </div>
       )}
     </div>
   );

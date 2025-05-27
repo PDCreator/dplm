@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import API from '../components/api';
-
+import '../styles/PlaceDetail.css'; // или добавить стили в существующий CSS файл
 function PlaceDetail() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -145,177 +145,140 @@ function PlaceDetail() {
   if (!place) return <div>Загрузка...</div>;
 
   return (
-    <div style={{ padding: '1rem' }}>
-      <h2>{place.title}</h2>
-      <p>{place.description}</p>
-      
-      {place.images?.length > 0 && (
-        <div style={{
-          display: 'flex',
-          gap: '1rem',
-          marginTop: '1rem',
-          flexWrap: 'wrap'
-        }}>
-          {place.images.map((img, index) => (
-            <img
-              key={index}
-              src={`http://localhost:5000${img}`}
-              alt={`Фото ${index + 1}`}
-              onClick={() => openGallery(index)}
-              style={{
-                width: '200px',
-                height: '150px',
-                objectFit: 'cover',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                transition: 'transform 0.2s',
-                ':hover': {
-                  transform: 'scale(1.03)'
-                }
-              }}
-            />
-          ))}
+    <div className="page-container">
+      <article className="place-detail">
+        <header className="place-header">
+          <h1 className="place-title">{place.title}</h1>
+          <time className="place-date">
+            Добавлено: {new Date(place.created_at).toLocaleString()}
+          </time>
+        </header>
+        
+        <div className="place-description">
+          <p>{place.description}</p>
         </div>
-      )}
-      
-      <p><small>Добавлено: {new Date(place.created_at).toLocaleString()}</small></p>
-      
-      <div style={{ marginTop: '2rem' }}>
-        <h4>Карта</h4>
-        <div id="map" style={{ width: '100%', height: '300px', borderRadius: '8px' }}></div>
-      </div>
-      
-      <div style={{ marginTop: '1rem' }}>
-        <button onClick={toggleLike}>
-          {likedByUser ? '❤️ Убрать лайк' : '🤍 Лайкнуть'}
-        </button>
-        <span style={{ marginLeft: '0.5rem' }}>{likeCount} лайков</span>
-      </div>
 
-      <div style={{ marginTop: '1rem' }}>
-        <button onClick={() => addToFavorites(id)} disabled={isFavorited}>
-          {isFavorited ? '⭐ Уже в избранном' : 'Добавить в избранное'}
-        </button>
-      </div>
-
-      <div style={{ marginTop: '2rem' }}>
-        <h4>Комментарии</h4>
-
-        {user ? (
-          <div>
-            <textarea
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              rows={3}
-              placeholder="Напишите комментарий..."
-              style={{ width: '100%', marginBottom: '0.5rem' }}
-            />
-            <button onClick={submitComment}>Отправить</button>
-          </div>
-        ) : (
-          <p>Чтобы оставить комментарий, <a href="/login">войдите</a>.</p>
+        {place.images?.length > 0 && (
+          <section className="gallery-section">
+            <h2 className="section-title">Фотографии</h2>
+            <div className="gallery-grid">
+              {place.images.map((img, index) => (
+                <div 
+                  key={index} 
+                  className="gallery-thumbnail"
+                  onClick={() => openGallery(index)}
+                >
+                  <img
+                    src={`http://localhost:5000${img}`}
+                    alt={`Фото ${index + 1}`}
+                    className="thumbnail-image"
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
         )}
 
-        {comments.length > 0 ? (
-          <ul>
-            {comments.map((c) => (
-              <li key={c.id}>
-                <b>{c.username}</b> ({new Date(c.created_at).toLocaleString()}):<br />
-                {c.content}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>Пока нет комментариев.</p>
-        )}
-      </div>
+        <section className="map-section">
+          <h2 className="section-title">Карта</h2>
+          <div id="map" className="map-container"></div>
+        </section>
 
-      {/* Галерея в полноэкранном режиме */}
-      {galleryOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.9)',
-          zIndex: 1000,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <button
-            onClick={closeGallery}
-            style={{
-              position: 'absolute',
-              top: '20px',
-              right: '20px',
-              background: 'none',
-              border: 'none',
-              color: 'white',
-              fontSize: '30px',
-              cursor: 'pointer'
-            }}
+        <div className="place-actions">
+          <button 
+            onClick={toggleLike} 
+            className={`like-btn ${likedByUser ? 'liked' : ''}`}
           >
-            ×
+            {likedByUser ? '❤️ Убрать лайк' : '🤍 Лайкнуть'}
+            <span className="like-count">{likeCount}</span>
           </button>
           
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-            height: '80%'
-          }}>
-            <button
-              onClick={goToPrev}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'white',
-                fontSize: '40px',
-                cursor: 'pointer',
-                margin: '0 20px'
-              }}
-            >
-              &#10094;
-            </button>
-            
-            <img
-              src={`http://localhost:5000${place.images[currentImageIndex]}`}
-              alt={`Фото ${currentImageIndex + 1}`}
-              style={{
-                maxWidth: '90%',
-                maxHeight: '90%',
-                objectFit: 'contain'
-              }}
-            />
-            
-            <button
-              onClick={goToNext}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'white',
-                fontSize: '40px',
-                cursor: 'pointer',
-                margin: '0 20px'
-              }}
-            >
-              &#10095;
-            </button>
-          </div>
-          
-          <div style={{
-            color: 'white',
-            marginTop: '20px',
-            fontSize: '18px'
-          }}>
-            {currentImageIndex + 1} / {place.images.length}
-          </div>
+          <button 
+            onClick={() => addToFavorites(id)} 
+            disabled={isFavorited}
+            className={`favorite-btn ${isFavorited ? 'favorited' : ''}`}
+          >
+            {isFavorited ? '⭐ Уже в избранном' : 'Добавить в избранное'}
+          </button>
         </div>
-      )}
+
+        <section className="comments-section">
+          <h2 className="section-title">Комментарии</h2>
+          
+          {user ? (
+            <form onSubmit={submitComment} className="comment-form">
+              <textarea
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                rows={3}
+                placeholder="Напишите комментарий..."
+                className="comment-input"
+              />
+              <button type="submit" className="btn">Отправить</button>
+            </form>
+          ) : (
+            <p className="login-prompt">
+              Чтобы оставить комментарий, <Link to="/login">войдите</Link>.
+            </p>
+          )}
+
+          {comments.length > 0 ? (
+            <ul className="comments-list">
+              {comments.map((c) => (
+                <li key={c.id} className="comment-item">
+                  <div className="comment-header">
+                    <strong className="comment-author">{c.username}</strong>
+                    <time className="comment-date">
+                      {new Date(c.created_at).toLocaleString()}
+                    </time>
+                  </div>
+                  <p className="comment-content">{c.content}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="no-comments">Пока нет комментариев.</p>
+          )}
+        </section>
+
+        {/* Галерея в полноэкранном режиме */}
+        {galleryOpen && (
+          <div className="gallery-modal">
+            <button
+              onClick={closeGallery}
+              className="close-gallery-btn"
+            >
+              ×
+            </button>
+            
+            <div className="gallery-content">
+              <button
+                onClick={goToPrev}
+                className="gallery-nav-btn prev-btn"
+              >
+                &#10094;
+              </button>
+              
+              <img
+                src={`http://localhost:5000${place.images[currentImageIndex]}`}
+                alt={`Фото ${currentImageIndex + 1}`}
+                className="gallery-image"
+              />
+              
+              <button
+                onClick={goToNext}
+                className="gallery-nav-btn next-btn"
+              >
+                &#10095;
+              </button>
+            </div>
+            
+            <div className="gallery-counter">
+              {currentImageIndex + 1} / {place.images.length}
+            </div>
+          </div>
+        )}
+      </article>
     </div>
   );
 }

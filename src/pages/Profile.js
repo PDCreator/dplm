@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext';
 import API from '../components/api';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import '../styles/Profile.css'; // или добавить стили в существующий CSS файл
 
 function Profile() {
   const { user } = useAuth();
@@ -71,72 +72,81 @@ function Profile() {
   if (!user) return <div>Для доступа к профилю, пожалуйста, войдите.</div>;
 
   return (
-    <div style={{ padding: '1rem' }}>
-      <h2>{user.username}'s Профиль</h2>
-      <p>Добро пожаловать, {user.username}!</p>
+    <div className="page-container">
+      <div className="profile-header">
+        <h1>{user.username}'s Профиль</h1>
+        <p className="welcome-message">Добро пожаловать, {user.username}!</p>
+      </div>
 
-      <h3>Email:</h3>
-      {editingEmail || !emailVerified ? (
-        <form onSubmit={handleEmailSubmit} style={{ marginBottom: '1rem' }}>
-          <input
-            type="email"
-            placeholder="Введите email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <button type="submit" style={{ marginLeft: '0.5rem' }}>Сохранить</button>
-        </form>
-      ) : (
-        <div style={{ marginBottom: '1rem' }}>
-          <p>Email: {email}</p>
-          <p>Статус: ✅ Подтверждён</p>
-          <button onClick={() => setEditingEmail(true)}>Изменить email</button>
-        </div>
-      )}
-
-      {!emailVerified && email && (
-        <p>Статус: ❗ Не подтверждён (Письмо отправлено)</p>
-      )}
-      {message && <p style={{ color: 'green' }}>{message}</p>}
-
-      <h3>Ваши избранные места:</h3>
-      {favorites.length > 0 ? (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-          gap: '1rem'
-        }}>
-          {favorites.map(place => (
-            <div key={place.id} style={{
-              border: '1px solid #ccc',
-              borderRadius: '8px',
-              padding: '1rem',
-              textAlign: 'center',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
-            }}>
-              <Link to={`/places/${place.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <h4>{place.title}</h4>
-              </Link>
-              {place.image && (
-                <img
-                  src={`${API}/uploads/${place.image}`}
-                  alt={place.title}
-                  style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '6px' }}
-                />
-              )}
-              <button
-                onClick={() => removeFromFavorites(place.id)}
-                style={{ marginTop: '0.5rem' }}
+      <div className="email-section">
+        <h3>Email:</h3>
+        {editingEmail || !emailVerified ? (
+          <form onSubmit={handleEmailSubmit} className="email-form">
+            <input
+              type="email"
+              placeholder="Введите email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <button type="submit" className="btn">Сохранить</button>
+          </form>
+        ) : (
+          <div>
+            <p>Email: {email}</p>
+            <div className={`email-status ${emailVerified ? 'verified' : 'not-verified'}`}>
+              {emailVerified ? '✅ Подтверждён' : '❗ Не подтверждён (Письмо отправлено)'}
+            </div>
+            <div className="email-actions">
+              <button 
+                onClick={() => setEditingEmail(true)} 
+                className="btn-outline"
               >
-                Удалить из избранного
+                Изменить email
               </button>
             </div>
-          ))}
-        </div>
-      ) : (
-        <p>У вас пока нет избранных мест.</p>
-      )}
+          </div>
+        )}
+        {message && (
+          <div className={`message ${message.includes('успешно') ? 'success' : 'error'}`}>
+            {message}
+          </div>
+        )}
+      </div>
+
+      <div className="favorites-section">
+        <h3>Ваши избранные места:</h3>
+        {favorites.length > 0 ? (
+          <div className="favorites-grid">
+            {favorites.map(place => (
+              <div key={place.id} className="favorite-card">
+                <Link to={`/places/${place.id}`} className="favorite-link">
+                  {place.image && (
+                    <img
+                      src={`${API}/uploads/${place.image}`}
+                      alt={place.title}
+                      className="favorite-image"
+                    />
+                  )}
+                  <div className="favorite-content">
+                    <h4 className="favorite-title">{place.title}</h4>
+                  </div>
+                </Link>
+                <button
+                  onClick={() => removeFromFavorites(place.id)}
+                  className="remove-favorite-btn"
+                >
+                  Удалить из избранного
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-favorites">
+            <p>У вас пока нет избранных мест.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

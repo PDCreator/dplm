@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import API from '../components/api';
-
+import '../styles/NewsDetail.css'; // или добавить стили в существующий CSS файл
 function NewsDetail() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -76,108 +76,97 @@ function NewsDetail() {
   if (!news) return <div>Загрузка...</div>;
 
   return (
-    <div style={{ padding: '1rem' }}>
-      <h2>{news.title}</h2>
-      <p>{news.content}</p>
-      <p><small>Опубликовано: {new Date(news.created_at).toLocaleString()}</small></p>
-
-      {news.places && news.places.length > 0 && (
-        <div style={{ marginTop: '2rem' }}>
-          <h3>Связанные места</h3>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-            gap: '1.5rem',
-            marginTop: '1rem'
-          }}>
-            {news.places.map(place => (
-              <Link 
-                key={place.id} 
-                to={`/places/${place.id}`}
-                style={{
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  padding: '1rem',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  ':hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                  }
-                }}
-              >
-                {place.image && (
-                  <img
-                    src={`http://localhost:5000${place.image}`}
-                    alt={place.title}
-                    style={{
-                      width: '100%',
-                      height: '160px',
-                      objectFit: 'cover',
-                      borderRadius: '6px',
-                      marginBottom: '0.75rem'
-                    }}
-                  />
-                )}
-                <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e40af' }}>{place.title}</h4>
-                <p style={{
-                  margin: '0.5rem 0',
-                  fontSize: '0.9rem',
-                  color: '#4b5563',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}>
-                  {place.description}
-                </p>
-              </Link>
-            ))}
-          </div>
+    <div className="page-container">
+      <article className="news-detail">
+        <header className="news-header">
+          <h1 className="news-title">{news.title}</h1>
+          <time className="news-date">
+            Опубликовано: {new Date(news.created_at).toLocaleString()}
+          </time>
+        </header>
+        
+        <div className="news-content">
+          <p>{news.content}</p>
         </div>
-      )}
 
-      <div style={{ marginTop: '1rem' }}>
-        <button onClick={toggleLike}>
-          {likedByUser ? '❤️ Убрать лайк' : '🤍 Лайкнуть'}
-        </button>
-        <span style={{ marginLeft: '0.5rem' }}>{likeCount} лайков</span>
-      </div>
+        <div className="news-actions">
+          <button 
+            onClick={toggleLike} 
+            className={`like-btn ${likedByUser ? 'liked' : ''}`}
+          >
+            {likedByUser ? '❤️ Убрать лайк' : '🤍 Лайкнуть'}
+            <span className="like-count">{likeCount}</span>
+          </button>
+        </div>
 
-      <div style={{ marginTop: '2rem' }}>
-        <h4>Комментарии</h4>
-
-        {user ? (
-          <div>
-            <textarea
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              rows={3}
-              placeholder="Напишите комментарий..."
-              style={{ width: '100%', marginBottom: '0.5rem' }}
-            />
-            <button onClick={submitComment}>Отправить</button>
-          </div>
-        ) : (
-          <p>Чтобы оставить комментарий, <a href="/login">войдите</a>.</p>
+        {news.places && news.places.length > 0 && (
+          <section className="related-places-section">
+            <h2 className="section-title">Связанные места</h2>
+            <div className="places-grid">
+              {news.places.map(place => (
+                <Link 
+                  key={place.id} 
+                  to={`/places/${place.id}`}
+                  className="place-card"
+                >
+                  {place.image && (
+                    <img
+                      src={`http://localhost:5000${place.image}`}
+                      alt={place.title}
+                      className="place-image"
+                    />
+                  )}
+                  <div className="place-info">
+                    <h3 className="place-title">{place.title}</h3>
+                    <p className="place-description">
+                      {place.description}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
         )}
 
-        {comments.length > 0 ? (
-          <ul>
-            {comments.map((c) => (
-              <li key={c.id}>
-                <b>{c.username}</b> ({new Date(c.created_at).toLocaleString()}):<br />
-                {c.content}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>Пока нет комментариев.</p>
-        )}
-      </div>
+        <section className="comments-section">
+          <h2 className="section-title">Комментарии</h2>
+          
+          {user ? (
+            <form onSubmit={submitComment} className="comment-form">
+              <textarea
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                rows={3}
+                placeholder="Напишите комментарий..."
+                className="comment-input"
+              />
+              <button type="submit" className="btn">Отправить</button>
+            </form>
+          ) : (
+            <p className="login-prompt">
+              Чтобы оставить комментарий, <Link to="/login">войдите</Link>.
+            </p>
+          )}
+
+          {comments.length > 0 ? (
+            <ul className="comments-list">
+              {comments.map((c) => (
+                <li key={c.id} className="comment-item">
+                  <div className="comment-header">
+                    <strong className="comment-author">{c.username}</strong>
+                    <time className="comment-date">
+                      {new Date(c.created_at).toLocaleString()}
+                    </time>
+                  </div>
+                  <p className="comment-content">{c.content}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="no-comments">Пока нет комментариев.</p>
+          )}
+        </section>
+      </article>
     </div>
   );
 }
