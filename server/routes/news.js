@@ -174,9 +174,46 @@ router.put('/:id', (req, res) => {
 router.delete('/:id', (req, res) => {
   const { id } = req.params;
 
-  db.query('DELETE FROM news WHERE id = ?', [id], (err) => {
-    if (err) return res.status(500).json({ message: 'Ошибка при удалении' });
-    res.json({ message: 'Новость удалена' });
+  // Начинаем транзакцию
+  db.beginTransaction(err => {
+    if (err) return res.status(500).json({ message: 'Ошибка начала транзакции' });
+
+    // 1. Удаляем комментарии к новости
+    db.query('DELETE FROM comments WHERE target_type = "news" AND target_id = ?', [id], (err) => {
+      if (err) return db.rollback(() => {
+        res.status(500).json({ message: 'Ошибка при удалении комментариев' });
+      });
+
+      // 2. Удаляем лайки новости
+      db.query('DELETE FROM likes WHERE target_type = "news" AND target_id = ?', [id], (err) => {
+        if (err) return db.rollback(() => {
+          res.status(500).json({ message: 'Ошибка при удалении лайков' });
+        });
+
+        // 3. Удаляем связи с местами
+        db.query('DELETE FROM news_places WHERE news_id = ?', [id], (err) => {
+          if (err) return db.rollback(() => {
+            res.status(500).json({ message: 'Ошибка при удалении связей с местами' });
+          });
+
+          // 4. Удаляем саму новость
+          db.query('DELETE FROM news WHERE id = ?', [id], (err) => {
+            if (err) return db.rollback(() => {
+              res.status(500).json({ message: 'Ошибка при удалении новости' });
+            });
+
+            // Фиксируем транзакцию
+            db.commit(err => {
+              if (err) return db.rollback(() => {
+                res.status(500).json({ message: 'Ошибка фиксации транзакции' });
+              });
+              
+              res.json({ message: 'Новость и все связанные данные удалены' });
+            });
+          });
+        });
+      });
+    });
   });
 });
 

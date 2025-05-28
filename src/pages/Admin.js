@@ -13,6 +13,9 @@ function Admin() {
   const [editingId, setEditingId] = useState(null);
   const [message, setMessage] = useState('');
   const [selectedPlaceIds, setSelectedPlaceIds] = useState([]);
+  const [placesInput, setPlacesInput] = useState('');
+  const [filteredPlaces, setFilteredPlaces] = useState([]);
+  const [showPlacesDropdown, setShowPlacesDropdown] = useState(false);
 
   // === Места ===
   const [places, setPlaces] = useState([]);
@@ -30,6 +33,9 @@ function Admin() {
   const [existingImages, setExistingImages] = useState([]);
   const [placeMessage, setPlaceMessage] = useState('');
   const [editingPlaceId, setEditingPlaceId] = useState(null);
+  const [tagToDelete, setTagToDelete] = useState('');
+  const [isDeletingTag, setIsDeletingTag] = useState(false);
+
 
   // === Пользователи ===
   const [users, setUsers] = useState([]);
@@ -70,7 +76,8 @@ function Admin() {
   const fetchTags = async () => {
     const res = await fetch('http://localhost:5000/api/places/tags');
     const data = await res.json();
-    setAvailableTags(data);
+    // Сортируем теги по имени для удобства выбора
+    setAvailableTags(data.sort((a, b) => a.name.localeCompare(b.name)));
   };
 
   // Фильтр пользователей по логину
@@ -133,6 +140,32 @@ function Admin() {
     } catch (err) {
       console.error('Error adding tag:', err);
       setPlaceMessage('Ошибка при добавлении тега');
+    }
+  };
+  // Обработчик удаления тега
+  const handleDeleteTag = async () => {
+    if (!tagToDelete || !window.confirm('Удалить этот тег? Это также удалит все его связи с местами.')) return;
+    
+    setIsDeletingTag(true);
+    try {
+      const res = await fetch(`http://localhost:5000/api/places/tags/${tagToDelete}`, {
+        method: 'DELETE'
+      });
+      
+      if (res.ok) {
+        // Обновляем список тегов
+        await fetchTags();
+        setTagToDelete('');
+        setPlaceMessage('Тег успешно удален');
+      } else {
+        const data = await res.json();
+        setPlaceMessage(data.error || 'Ошибка при удалении тега');
+      }
+    } catch (err) {
+      console.error('Error deleting tag:', err);
+      setPlaceMessage('Ошибка при удалении тега');
+    } finally {
+      setIsDeletingTag(false);
     }
   };
 
@@ -347,27 +380,68 @@ return (
               className="admin-textarea"
             />
             
-            <div className="admin-checkbox-group">
-              <p>Привязать к местам:</p>
-              <div className="admin-checkboxes">
-                {places.map((place) => (
-                  <label key={place.id} className="admin-checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={selectedPlaceIds.includes(place.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedPlaceIds([...selectedPlaceIds, place.id]);
-                        } else {
-                          setSelectedPlaceIds(selectedPlaceIds.filter(id => id !== place.id));
-                        }
-                      }}
-                      className="admin-checkbox"
-                    />{' '}
-                    {place.title}
-                  </label>
-                ))}
+            <div className="admin-tags-container">
+              <label>Привязать к местам:</label>
+              <div className="admin-tags-selected">
+                {selectedPlaceIds.map(placeId => {
+                  const place = places.find(p => p.id === placeId);
+                  return place ? (
+                    <span key={place.id} className="admin-tag">
+                      {place.title}
+                      <button 
+                        type="button" 
+                        onClick={() => setSelectedPlaceIds(selectedPlaceIds.filter(id => id !== place.id))}
+                        className="admin-tag-remove"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ) : null;
+                })}
               </div>
+              
+              <input
+                type="text"
+                placeholder="Добавить места (начните вводить)"
+                value={placesInput}
+                onChange={(e) => {
+                  setPlacesInput(e.target.value);
+                  if (e.target.value.length > 0) {
+                    const filtered = places.filter(place => 
+                      place.title.toLowerCase().includes(e.target.value.toLowerCase()) &&
+                      !selectedPlaceIds.includes(place.id)
+                    );
+                    setFilteredPlaces(filtered);
+                    setShowPlacesDropdown(true);
+                  } else {
+                    setFilteredPlaces([]);
+                    setShowPlacesDropdown(false);
+                  }
+                }}
+                onFocus={() => {
+                  setFilteredPlaces(places.filter(place => !selectedPlaceIds.includes(place.id)));
+                  setShowPlacesDropdown(true);
+                }}
+                className="admin-input"
+              />
+              
+              {showPlacesDropdown && (
+                <ul className="admin-tags-dropdown">
+                  {filteredPlaces.map(place => (
+                    <li 
+                      key={place.id}
+                      onClick={() => {
+                        setSelectedPlaceIds([...selectedPlaceIds, place.id]);
+                        setPlacesInput('');
+                        setShowPlacesDropdown(false);
+                      }}
+                      className="admin-tags-dropdown-item"
+                    >
+                      {place.title}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             
             <div className="admin-form-actions">
@@ -429,9 +503,11 @@ return (
       {/* === Места === */}
       {activeTab === 'places' && (
         <div className="admin-section">
-                      {/* Новый тег */}
-            <div className="admin-new-tag">
-              <label>Добавить новый тег в базу данных:</label>
+          {/* Новый тег */}
+          <div className="admin-new-tag">
+            <label>Управление тегами:</label>
+            <div className="admin-tags-management">
+              {/* Добавление нового тега */}
               <div className="admin-new-tag-input">
                 <input
                   type="text"
@@ -449,7 +525,32 @@ return (
                   Добавить
                 </button>
               </div>
+
+              {/* Удаление существующего тега */}
+              <div className="admin-delete-tag">
+                <select
+                  value={tagToDelete}
+                  onChange={(e) => setTagToDelete(e.target.value)}
+                  className="admin-select"
+                >
+                  <option value="">Выберите тег для удаления</option>
+                  {availableTags.map(tag => (
+                    <option key={tag.id} value={tag.id}>
+                      {tag.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={handleDeleteTag}
+                  disabled={!tagToDelete}
+                  className="admin-button small danger"
+                >
+                  Удалить
+                </button>
+              </div>
             </div>
+          </div>
           <form onSubmit={handlePlaceSubmit} className="admin-form">
             <h3 className="admin-subtitle">
               {editingPlaceId ? 'Редактировать место' : 'Добавить место'}
@@ -497,7 +598,13 @@ return (
                 placeholder="Добавить теги (начните вводить)"
                 value={tagsInput}
                 onChange={handleTagsInputChange}
-                onFocus={() => tagsInput.length > 0 && setShowTagDropdown(true)}
+                onFocus={() => {
+                  const filtered = availableTags.filter(tag => 
+                    !selectedTags.some(t => t.id === tag.id)
+                  );
+                  setFilteredTags(filtered);
+                  setShowTagDropdown(filtered.length > 0);
+                }}
                 className="admin-input"
               />
               

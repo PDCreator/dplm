@@ -174,14 +174,67 @@ router.put('/:id', upload.array('images'), (req, res) => {
 router.delete('/:id', (req, res) => {
   const { id } = req.params;
 
-  db.query('DELETE FROM places WHERE id = ?', [id], (err) => {
-    if (err) return res.status(500).json({ error: 'Ошибка при удалении' });
+  // Начинаем транзакцию
+  db.beginTransaction(err => {
+    if (err) return res.status(500).json({ error: 'Ошибка начала транзакции' });
 
-    // Также удалим связи
-    db.query('DELETE FROM place_tags WHERE place_id = ?', [id], () => {});
-    db.query('DELETE FROM place_images WHERE place_id = ?', [id], () => {});
+    // 1. Удаляем комментарии к месту
+    db.query('DELETE FROM comments WHERE target_type = "place" AND target_id = ?', [id], (err) => {
+      if (err) return db.rollback(() => {
+        res.status(500).json({ error: 'Ошибка при удалении комментариев' });
+      });
 
-    res.json({ message: 'Место и связанные данные удалены' });
+      // 2. Удаляем лайки места
+      db.query('DELETE FROM likes WHERE target_type = "place" AND target_id = ?', [id], (err) => {
+        if (err) return db.rollback(() => {
+          res.status(500).json({ error: 'Ошибка при удалении лайков' });
+        });
+
+        // 3. Удаляем связи с тегами
+        db.query('DELETE FROM place_tags WHERE place_id = ?', [id], (err) => {
+          if (err) return db.rollback(() => {
+            res.status(500).json({ error: 'Ошибка при удалении тегов' });
+          });
+
+          // 4. Удаляем изображения места
+          db.query('DELETE FROM place_images WHERE place_id = ?', [id], (err) => {
+            if (err) return db.rollback(() => {
+              res.status(500).json({ error: 'Ошибка при удалении изображений' });
+            });
+
+            // 5. Удаляем связи с новостями
+            db.query('DELETE FROM news_places WHERE place_id = ?', [id], (err) => {
+              if (err) return db.rollback(() => {
+                res.status(500).json({ error: 'Ошибка при удалении связей с новостями' });
+              });
+
+              // 6. Удаляем из избранного
+              db.query('DELETE FROM favorites WHERE place_id = ?', [id], (err) => {
+                if (err) return db.rollback(() => {
+                  res.status(500).json({ error: 'Ошибка при удалении из избранного' });
+                });
+
+                // 7. Удаляем само место
+                db.query('DELETE FROM places WHERE id = ?', [id], (err) => {
+                  if (err) return db.rollback(() => {
+                    res.status(500).json({ error: 'Ошибка при удалении места' });
+                  });
+
+                  // Фиксируем транзакцию
+                  db.commit(err => {
+                    if (err) return db.rollback(() => {
+                      res.status(500).json({ error: 'Ошибка фиксации транзакции' });
+                    });
+                    
+                    res.json({ message: 'Место и все связанные данные удалены' });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
   });
 });
 
@@ -217,6 +270,65 @@ router.post('/tags', (req, res) => {
         id: result.insertId,
         name: name.trim(),
         message: 'Тег успешно добавлен'
+      });
+    });
+  });
+});
+// Удалить тег
+router.delete('/tags/:id', (req, res) => {
+  const { id } = req.params;
+
+  // Проверяем, существует ли тег
+  db.query('SELECT id FROM tags WHERE id = ?', [id], (err, results) => {
+    if (err) {
+      console.error('Ошибка при проверке тега:', err);
+      return res.status(500).json({ error: 'Ошибка при проверке тега' });
+    }
+    
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Тег не найден' });
+    }
+
+    // Начинаем транзакцию для безопасного удаления
+    db.beginTransaction(err => {
+      if (err) {
+        console.error('Ошибка начала транзакции:', err);
+        return res.status(500).json({ error: 'Ошибка начала транзакции' });
+      }
+
+      // 1. Удаляем связи тега с местами
+      db.query('DELETE FROM place_tags WHERE tag_id = ?', [id], (err) => {
+        if (err) {
+          return db.rollback(() => {
+            console.error('Ошибка при удалении связей тега:', err);
+            res.status(500).json({ error: 'Ошибка при удалении связей тега' });
+          });
+        }
+
+        // 2. Удаляем сам тег
+        db.query('DELETE FROM tags WHERE id = ?', [id], (err, result) => {
+          if (err) {
+            return db.rollback(() => {
+              console.error('Ошибка при удалении тега:', err);
+              res.status(500).json({ error: 'Ошибка при удалении тега' });
+            });
+          }
+
+          // Фиксируем транзакцию
+          db.commit(err => {
+            if (err) {
+              return db.rollback(() => {
+                console.error('Ошибка фиксации транзакции:', err);
+                res.status(500).json({ error: 'Ошибка фиксации транзакции' });
+              });
+            }
+            
+            res.json({ 
+              message: 'Тег и все его связи успешно удалены',
+              deletedTagId: id
+            });
+          });
+        });
       });
     });
   });

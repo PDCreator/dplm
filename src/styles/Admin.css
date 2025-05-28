@@ -398,3 +398,39 @@
 .admin-coords .admin-input {
     margin-bottom: 0;
 }
+
+
+.admin-tags-management {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.admin-new-tag-input,
+.admin-delete-tag {
+    flex: 1;
+    display: flex;
+    gap: 8px;
+}
+
+.admin-select {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.admin-button.danger {
+    background-color: #ff4444;
+    color: white;
+}
+
+.admin-button.danger:hover {
+    background-color: #cc0000;
+}
+
+.admin-button.small {
+    padding: 6px 12px;
+    font-size: 13px;
+}
