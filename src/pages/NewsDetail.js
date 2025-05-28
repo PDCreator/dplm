@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { useTranslation } from 'react-i18next';
 import API from '../components/api';
-import '../styles/NewsDetail.css'; // или добавить стили в существующий CSS файл
+import '../styles/NewsDetail.css';
+
 function NewsDetail() {
+  const { t } = useTranslation('placeNewsDetail');
   const { id } = useParams();
   const { user } = useAuth();
 
@@ -40,7 +43,7 @@ function NewsDetail() {
   }, [id, user]);
 
   const toggleLike = async () => {
-    if (!user) return alert('Войдите, чтобы ставить лайки');
+    if (!user) return alert(t('news.login_required_like'));
 
     const res = await fetch(`${API}/likes/news/${id}`, {
       method: 'POST',
@@ -57,7 +60,7 @@ function NewsDetail() {
   };
 
   const submitComment = async () => {
-    if (!user) return alert('Войдите, чтобы комментировать');
+    if (!user) return alert(t('news.login_required_comment'));
     if (!commentText.trim()) return;
 
     const res = await fetch(`${API}/comments/news/${id}`, {
@@ -73,7 +76,7 @@ function NewsDetail() {
     }
   };
 
-  if (!news) return <div>Загрузка...</div>;
+  if (!news) return <div>{t('common.loading')}</div>;
 
   return (
     <div className="page-container">
@@ -81,7 +84,7 @@ function NewsDetail() {
         <header className="news-header">
           <h1 className="news-title">{news.title}</h1>
           <time className="news-date">
-            Опубликовано: {new Date(news.created_at).toLocaleString()}
+            {t('news.published_on')} {new Date(news.created_at).toLocaleString(t('locale'))}
           </time>
         </header>
         
@@ -94,14 +97,14 @@ function NewsDetail() {
             onClick={toggleLike} 
             className={`like-btn ${likedByUser ? 'liked' : ''}`}
           >
-            {likedByUser ? '❤️ Убрать лайк' : '🤍 Лайкнуть'}
+            {likedByUser ? `❤️ ${t('news.unlike')}` : `🤍 ${t('news.like')}`}
             <span className="like-count">{likeCount}</span>
           </button>
         </div>
 
         {news.places && news.places.length > 0 && (
           <section className="related-places-section">
-            <h2 className="section-title">Связанные места</h2>
+            <h2 className="section-title">{t('news.related_places')}</h2>
             <div className="places-grid">
               {news.places.map(place => (
                 <Link 
@@ -129,7 +132,7 @@ function NewsDetail() {
         )}
 
         <section className="comments-section">
-          <h2 className="section-title">Комментарии</h2>
+          <h2 className="section-title">{t('news.comments')}</h2>
           
           {user ? (
             <form onSubmit={submitComment} className="comment-form">
@@ -137,14 +140,14 @@ function NewsDetail() {
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 rows={3}
-                placeholder="Напишите комментарий..."
+                placeholder={t('news.comment_placeholder')}
                 className="comment-input"
               />
-              <button type="submit" className="btn">Отправить</button>
+              <button type="submit" className="btn">{t('news.submit_comment')}</button>
             </form>
           ) : (
             <p className="login-prompt">
-              Чтобы оставить комментарий, <Link to="/login">войдите</Link>.
+              {t('news.login_to_comment')} <Link to="/login">{t('news.login')}</Link>.
             </p>
           )}
 
@@ -155,7 +158,7 @@ function NewsDetail() {
                   <div className="comment-header">
                     <strong className="comment-author">{c.username}</strong>
                     <time className="comment-date">
-                      {new Date(c.created_at).toLocaleString()}
+                      {new Date(c.created_at).toLocaleString(t('locale'))}
                     </time>
                   </div>
                   <p className="comment-content">{c.content}</p>
@@ -163,7 +166,7 @@ function NewsDetail() {
               ))}
             </ul>
           ) : (
-            <p className="no-comments">Пока нет комментариев.</p>
+            <p className="no-comments">{t('news.no_comments')}</p>
           )}
         </section>
       </article>

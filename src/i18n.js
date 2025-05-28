@@ -9,7 +9,7 @@ i18n
     lng: 'ru', // язык по умолчанию
     fallbackLng: 'ru',
     debug: true, // временно включите для отладки
-    ns: ['common', 'profile'], // явно укажите namespace'ы
+    ns: ['common', 'profile', 'places', 'news', 'placeNewsDetail'], // явно укажите namespace'ы
     defaultNS: 'common',
     backend: {
       loadPath: '/locales/{{lng}}/{{ns}}.json',

@@ -1,0 +1,9 @@
+{
+  "news": {
+    "title": "News",
+    "filter_placeholder": "Filter by place...",
+    "loading": "Loading news...",
+    "no_news": "No news yet",
+    "related_places": "Related places"
+  }
+}

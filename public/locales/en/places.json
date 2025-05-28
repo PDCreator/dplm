@@ -1,0 +1,12 @@
+{
+  "places": {
+    "all_places": "All Places",
+    "search_placeholder": "Search by name or description",
+    "search_button": "Search",
+    "filter_by_tags": "Filter by tags",
+    "no_results": "No results found",
+    "try_changing_search": "Try changing your search criteria",
+    "fetch_error": "Error loading places",
+    "tags_fetch_error": "Error loading tags"
+  }
+}

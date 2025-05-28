@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Select from 'react-select';
-import '../styles/News.css'; // или добавить стили в существующий CSS файл
+import '../styles/News.css';
+
 function News() {
+  const { t } = useTranslation('news');
   const [newsList, setNewsList] = useState([]);
   const [places, setPlaces] = useState([]);
   const [selectedPlace, setSelectedPlace] = useState(null);
@@ -44,14 +47,14 @@ function News() {
   return (
     <div className="page-container">
       <div className="header-with-filter">
-        <h1>Новости</h1>
+        <h1>{t('news.title')}</h1>
         <div className="filter-container">
           <Select
             options={places}
             value={selectedPlace}
             onChange={handlePlaceChange}
             isClearable
-            placeholder="Фильтр по месту..."
+            placeholder={t('news.filter_placeholder')}
             className="place-select"
             classNamePrefix="select"
           />
@@ -59,10 +62,10 @@ function News() {
       </div>
 
       {loading ? (
-        <div className="loading-spinner">Загрузка новостей...</div>
+        <div className="loading-spinner">{t('news.loading')}</div>
       ) : newsList.length === 0 ? (
         <div className="empty-state">
-          <p>Пока нет новостей</p>
+          <p>{t('news.no_news')}</p>
         </div>
       ) : (
         <div className="news-grid">
@@ -78,7 +81,7 @@ function News() {
               
               {news.places && news.places.length > 0 && (
                 <div className="related-places">
-                  <h3 className="related-places-title">Связанные места:</h3>
+                  <h3 className="related-places-title">{t('news.related_places')}:</h3>
                   <div className="places-grid">
                     {news.places.map(place => (
                       <Link 

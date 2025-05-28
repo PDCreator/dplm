@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import API from '../components/api';
-import '../styles/Places.css'; // или добавить стили в существующий CSS файл
+import '../styles/Places.css';
+
 function Places() {
+  const { t } = useTranslation('places');
   const [places, setPlaces] = useState([]);
   const [search, setSearch] = useState('');
   const [availableTags, setAvailableTags] = useState([]);
@@ -18,14 +21,14 @@ function Places() {
     fetch(`${API}/places?${query.toString()}`)
       .then(res => res.json())
       .then(data => setPlaces(data))
-      .catch(err => console.error('Ошибка при загрузке мест:', err));
+      .catch(err => console.error(t('places.fetch_error'), err));
   };
 
   const fetchTags = () => {
     fetch(`${API}/places/tags`)
       .then(res => res.json())
       .then(data => setAvailableTags(data))
-      .catch(err => console.error('Ошибка при загрузке тегов:', err));
+      .catch(err => console.error(t('places.tags_fetch_error'), err));
   };
 
   useEffect(() => {
@@ -51,18 +54,18 @@ function Places() {
   return (
     <div className="page-container">
       <div className="places-header">
-        <h1>Все места</h1>
+        <h1>{t('places.all_places')}</h1>
         
         <form onSubmit={handleSearchSubmit} className="search-form">
           <div className="search-input-group">
             <input
               type="text"
-              placeholder="Поиск по названию или описанию"
+              placeholder={t('places.search_placeholder')}
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="search-input"
             />
-            <button type="submit" className="search-btn">Найти</button>
+            <button type="submit" className="search-btn">{t('places.search_button')}</button>
           </div>
 
           <div className="selected-tags">
@@ -85,7 +88,7 @@ function Places() {
         </form>
 
         <div className="tags-filter">
-          <h3>Фильтр по тегам:</h3>
+          <h3>{t('places.filter_by_tags')}:</h3>
           <div className="tags-list">
             {availableTags.map(tag => (
               <button
@@ -142,8 +145,8 @@ function Places() {
         </div>
       ) : (
         <div className="empty-state">
-          <p className="empty-message">Ничего не найдено</p>
-          <p className="empty-hint">Попробуйте изменить параметры поиска</p>
+          <p className="empty-message">{t('places.no_results')}</p>
+          <p className="empty-hint">{t('places.try_changing_search')}</p>
         </div>
       )}
     </div>

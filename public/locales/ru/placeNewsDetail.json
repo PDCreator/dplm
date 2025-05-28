@@ -1,0 +1,40 @@
+{
+  "common": {
+    "loading": "Загрузка..."
+  },
+  "place": {
+    "added_on": "Добавлено:",
+    "photos": "Фотографии",
+    "map": "Карта",
+    "like": "Лайкнуть",
+    "unlike": "Убрать лайк",
+    "add_to_favorites": "Добавить в избранное",
+    "already_favorite": "Уже в избранном",
+    "comments": "Комментарии",
+    "comment_placeholder": "Напишите комментарий...",
+    "submit_comment": "Отправить",
+    "login_to_comment": "Чтобы оставить комментарий,",
+    "login": "войдите",
+    "no_comments": "Пока нет комментариев",
+    "photo": "Фото",
+    "login_required_like": "Войдите, чтобы ставить лайки",
+    "login_required_comment": "Войдите, чтобы комментировать",
+    "login_required_favorite": "Войдите, чтобы добавить место в избранное",
+    "already_favorited": "Это место уже в вашем избранном"
+  },
+  "news": {
+    "published_on": "Опубликовано:",
+    "like": "Лайкнуть",
+    "unlike": "Убрать лайк",
+    "related_places": "Связанные места",
+    "comments": "Комментарии",
+    "comment_placeholder": "Напишите комментарий...",
+    "submit_comment": "Отправить",
+    "login_to_comment": "Чтобы оставить комментарий,",
+    "login": "войдите",
+    "no_comments": "Пока нет комментариев",
+    "login_required_like": "Войдите, чтобы ставить лайки",
+    "login_required_comment": "Войдите, чтобы комментировать"
+  },
+  "locale": "ru-RU"
+}

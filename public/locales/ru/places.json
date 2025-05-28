@@ -1,0 +1,12 @@
+{
+  "places": {
+    "all_places": "Все места",
+    "search_placeholder": "Поиск по названию или описанию",
+    "search_button": "Найти",
+    "filter_by_tags": "Фильтр по тегам",
+    "no_results": "Ничего не найдено",
+    "try_changing_search": "Попробуйте изменить параметры поиска",
+    "fetch_error": "Ошибка при загрузке мест",
+    "tags_fetch_error": "Ошибка при загрузке тегов"
+  }
+}

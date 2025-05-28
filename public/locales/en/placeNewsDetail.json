@@ -1,0 +1,40 @@
+{
+  "common": {
+    "loading": "Loading..."
+  },
+  "place": {
+    "added_on": "Added on:",
+    "photos": "Photos",
+    "map": "Map",
+    "like": "Like",
+    "unlike": "Unlike",
+    "add_to_favorites": "Add to favorites",
+    "already_favorite": "Already in favorites",
+    "comments": "Comments",
+    "comment_placeholder": "Write a comment...",
+    "submit_comment": "Submit",
+    "login_to_comment": "To leave a comment,",
+    "login": "login",
+    "no_comments": "No comments yet",
+    "photo": "Photo",
+    "login_required_like": "Please login to like",
+    "login_required_comment": "Please login to comment",
+    "login_required_favorite": "Please login to add to favorites",
+    "already_favorited": "This place is already in your favorites"
+  },
+  "news": {
+    "published_on": "Published on:",
+    "like": "Like",
+    "unlike": "Unlike",
+    "related_places": "Related places",
+    "comments": "Comments",
+    "comment_placeholder": "Write a comment...",
+    "submit_comment": "Submit",
+    "login_to_comment": "To leave a comment,",
+    "login": "login",
+    "no_comments": "No comments yet",
+    "login_required_like": "Please login to like",
+    "login_required_comment": "Please login to comment"
+  },
+  "locale": "en-US"
+}
