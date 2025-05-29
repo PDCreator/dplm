@@ -1,0 +1,22 @@
+{
+  "navbar": {
+    "news": "Noticias",
+    "places": "Lugares",
+    "profile": "Perfil",
+    "admin": "Admin",
+    "logout": "Salir",
+    "login": "Iniciar sesión",
+    "register": "Registrarse"
+  },
+  "buttons": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "changeEmail": "Cambiar email",
+    "removeFavorite": "Eliminar de favoritos"
+  },
+  "messages": {
+    "loginRequired": "Por favor inicie sesión para acceder al perfil",
+    "emailVerified": "¡Email verificado con éxito!",
+    "emailNotVerified": "Email no verificado"
+  }
+}

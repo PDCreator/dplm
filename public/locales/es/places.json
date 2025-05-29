@@ -1,0 +1,12 @@
+{
+  "places": {
+    "all_places": "Todos los lugares",
+    "search_placeholder": "Buscar por nombre o descripción",
+    "search_button": "Buscar",
+    "filter_by_tags": "Filtrar por etiquetas",
+    "no_results": "No se encontraron resultados",
+    "try_changing_search": "Intente cambiar los criterios de búsqueda",
+    "fetch_error": "Error al cargar lugares",
+    "tags_fetch_error": "Error al cargar etiquetas"
+  }
+}

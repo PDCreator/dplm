@@ -1,0 +1,27 @@
+{
+  "login": {
+    "title": "Iniciar sesión",
+    "username_placeholder": "Usuario",
+    "password_placeholder": "Contraseña",
+    "submit_button": "Entrar",
+    "no_account": "¿No tienes cuenta?",
+    "register_link": "Regístrate",
+    "welcome_message": "Bienvenido, {username}",
+    "error": "Error al iniciar sesión",
+    "connection_error": "Error de conexión con el servidor"
+  },
+  "register": {
+    "title": "Registro",
+    "username_placeholder": "Usuario",
+    "password_placeholder": "Contraseña",
+    "confirm_password_placeholder": "Confirmar contraseña",
+    "submit_button": "Registrarse",
+    "welcome_message": "Bienvenido, {username}",
+    "username_requirements": "El usuario solo puede contener letras latinas y números",
+    "password_length": "La contraseña debe tener al menos 8 caracteres",
+    "password_mismatch": "Las contraseñas no coinciden",
+    "error": "Error en el registro",
+    "login_after_error": "Registro exitoso pero inicio de sesión fallido",
+    "connection_error": "Servidor no disponible"
+  }
+}

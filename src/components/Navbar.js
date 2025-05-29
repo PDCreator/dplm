@@ -25,7 +25,7 @@ function Navbar() {
       <div style={{ marginLeft: 'auto', display: 'flex', gap: '1rem' }}>
         <button onClick={() => changeLanguage('ru')}>RU</button>
         <button onClick={() => changeLanguage('en')}>EN</button>
-        
+        <button onClick={() => changeLanguage('es')}>ESP</button>
         {isLoggedIn ? (
           <button onClick={logout}>{t('navbar.logout')}</button>
         ) : (
