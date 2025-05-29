@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { useTranslation } from 'react-i18next';
 import API from '../components/api';
-import '../styles/PlaceDetail.css'; // или добавить стили в существующий CSS файл
+import '../styles/PlaceDetail.css';
+
 function PlaceDetail() {
+  const { t } = useTranslation( 'placeNewsDetail');
   const { id } = useParams();
   const { user } = useAuth();
 
@@ -13,11 +16,62 @@ function PlaceDetail() {
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
   const [isFavorited, setIsFavorited] = useState(false);
-  
-  // Состояния для галереи
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  useEffect(() => {
+  if (!place || !place.latitude || !place.longitude) return;
+
+  let map;
+  let placemark;
+  let checkInterval;
+
+  const initMap = () => {
+    try {
+      window.ymaps.ready(() => {
+        // Удаляем предыдущую карту, если есть
+        const existingMap = document.getElementById('map');
+        if (existingMap && existingMap._yandexMap) {
+          existingMap._yandexMap.destroy();
+        }
+
+        map = new window.ymaps.Map('map', {
+          center: [parseFloat(place.latitude), parseFloat(place.longitude)],
+          zoom: 14,
+        });
+
+        placemark = new window.ymaps.Placemark(
+          [parseFloat(place.latitude), parseFloat(place.longitude)],
+          { balloonContent: place.title },
+          { preset: 'islands#icon', iconColor: '#ff0000' }
+        );
+
+        map.geoObjects.add(placemark);
+        
+        // Сохраняем ссылку на карту
+        document.getElementById('map')._yandexMap = map;
+      });
+    } catch (error) {
+      console.error('Error initializing Yandex Map:', error);
+    }
+  };
+
+    if (window.ymaps) {
+      initMap();
+    } else {
+      checkInterval = setInterval(() => {
+        if (window.ymaps) {
+          clearInterval(checkInterval);
+          initMap();
+        }
+      }, 100);
+    }
+
+    return () => {
+      if (checkInterval) clearInterval(checkInterval);
+      if (map) map.destroy();
+    };
+  }, [place, t]);
   useEffect(() => {
     fetch(`${API}/places/${id}`)
       .then(res => res.json())
@@ -41,15 +95,13 @@ function PlaceDetail() {
     if (user) {
       fetch(`${API}/favorites/place/${id}?user_id=${user.id}`)
         .then(res => res.json())
-        .then(data => {
-          setIsFavorited(data.isFavorited || false);
-        });
+        .then(data => setIsFavorited(data.isFavorited || false));
     }
   }, [id, user]);
 
   const addToFavorites = async (placeId) => {
-    if (!user) return alert('Войдите, чтобы добавить место в избранное');
-    if (isFavorited) return alert('Это место уже в вашем избранном');
+    if (!user) return alert(t('place.login_required_favorite'));
+    if (isFavorited) return alert(t('place.already_favorited'));
 
     const res = await fetch(`${API}/favorites/${placeId}`, {
       method: 'POST',
@@ -57,13 +109,11 @@ function PlaceDetail() {
       body: JSON.stringify({ user_id: user.id }),
     });
 
-    if (res.ok) {
-      setIsFavorited(true);
-    }
+    if (res.ok) setIsFavorited(true);
   };
 
   const toggleLike = async () => {
-    if (!user) return alert('Войдите, чтобы ставить лайки');
+    if (!user) return alert(t('place.login_required_like'));
 
     await fetch(`${API}/likes/place/${id}`, {
       method: 'POST',
@@ -78,7 +128,7 @@ function PlaceDetail() {
   };
 
   const submitComment = async () => {
-    if (!user) return alert('Войдите, чтобы комментировать');
+    if (!user) return alert(t('place.login_required_comment'));
     if (!commentText.trim()) return;
 
     const res = await fetch(`${API}/comments/place/${id}`, {
@@ -94,40 +144,16 @@ function PlaceDetail() {
     }
   };
 
-  useEffect(() => {
-    if (!place || !window.ymaps || !place.latitude || !place.longitude) return;
-  
-    window.ymaps.ready(() => {
-      const map = new window.ymaps.Map('map', {
-        center: [parseFloat(place.latitude), parseFloat(place.longitude)],
-        zoom: 14,
-      });
-  
-      const placemark = new window.ymaps.Placemark(
-        [parseFloat(place.latitude), parseFloat(place.longitude)],
-        {
-          balloonContent: place.title || place.name,
-        },
-        {
-          preset: 'islands#icon',
-          iconColor: '#ff0000',
-        }
-      );
-  
-      map.geoObjects.add(placemark);
-    });
-  }, [place]);
-
   // Функции для галереи
   const openGallery = (index) => {
     setCurrentImageIndex(index);
     setGalleryOpen(true);
-    document.body.style.overflow = 'hidden'; // Блокируем прокрутку страницы
+    document.body.style.overflow = 'hidden';
   };
 
   const closeGallery = () => {
     setGalleryOpen(false);
-    document.body.style.overflow = 'auto'; // Восстанавливаем прокрутку
+    document.body.style.overflow = 'auto';
   };
 
   const goToPrev = () => {
@@ -142,7 +168,7 @@ function PlaceDetail() {
     );
   };
 
-  if (!place) return <div>Загрузка...</div>;
+  if (!place) return <div>{t('common.loading')}</div>;
 
   return (
     <div className="page-container">
@@ -150,7 +176,7 @@ function PlaceDetail() {
         <header className="place-header">
           <h1 className="place-title">{place.title}</h1>
           <time className="place-date">
-            Добавлено: {new Date(place.created_at).toLocaleString()}
+            {t('place.added_on')} {new Date(place.created_at).toLocaleString(t('locale'))}
           </time>
         </header>
         
@@ -160,7 +186,7 @@ function PlaceDetail() {
 
         {place.images?.length > 0 && (
           <section className="gallery-section">
-            <h2 className="section-title">Фотографии</h2>
+            <h2 className="section-title">{t('place.photos')}</h2>
             <div className="gallery-grid">
               {place.images.map((img, index) => (
                 <div 
@@ -170,7 +196,7 @@ function PlaceDetail() {
                 >
                   <img
                     src={`http://localhost:5000${img}`}
-                    alt={`Фото ${index + 1}`}
+                    alt={`${t('place.photo')} ${index + 1}`}
                     className="thumbnail-image"
                   />
                 </div>
@@ -180,7 +206,7 @@ function PlaceDetail() {
         )}
 
         <section className="map-section">
-          <h2 className="section-title">Карта</h2>
+          <h2 className="section-title">{t('place.map')}</h2>
           <div id="map" className="map-container"></div>
         </section>
 
@@ -189,7 +215,7 @@ function PlaceDetail() {
             onClick={toggleLike} 
             className={`like-btn ${likedByUser ? 'liked' : ''}`}
           >
-            {likedByUser ? '❤️ Убрать лайк' : '🤍 Лайкнуть'}
+            {likedByUser ? `❤️ ${t('place.unlike')}` : `🤍 ${t('place.like')}`}
             <span className="like-count">{likeCount}</span>
           </button>
           
@@ -198,12 +224,12 @@ function PlaceDetail() {
             disabled={isFavorited}
             className={`favorite-btn ${isFavorited ? 'favorited' : ''}`}
           >
-            {isFavorited ? '⭐ Уже в избранном' : 'Добавить в избранное'}
+            {isFavorited ? `⭐ ${t('place.already_favorite')}` : t('place.add_to_favorites')}
           </button>
         </div>
 
         <section className="comments-section">
-          <h2 className="section-title">Комментарии</h2>
+          <h2 className="section-title">{t('place.comments')}</h2>
           
           {user ? (
             <form onSubmit={submitComment} className="comment-form">
@@ -211,14 +237,14 @@ function PlaceDetail() {
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 rows={3}
-                placeholder="Напишите комментарий..."
+                placeholder={t('place.comment_placeholder')}
                 className="comment-input"
               />
-              <button type="submit" className="btn">Отправить</button>
+              <button type="submit" className="btn">{t('place.submit_comment')}</button>
             </form>
           ) : (
             <p className="login-prompt">
-              Чтобы оставить комментарий, <Link to="/login">войдите</Link>.
+              {t('place.login_to_comment')} <Link to="/login">{t('place.login')}</Link>.
             </p>
           )}
 
@@ -229,7 +255,7 @@ function PlaceDetail() {
                   <div className="comment-header">
                     <strong className="comment-author">{c.username}</strong>
                     <time className="comment-date">
-                      {new Date(c.created_at).toLocaleString()}
+                      {new Date(c.created_at).toLocaleString(t('locale'))}
                     </time>
                   </div>
                   <p className="comment-content">{c.content}</p>
@@ -237,38 +263,28 @@ function PlaceDetail() {
               ))}
             </ul>
           ) : (
-            <p className="no-comments">Пока нет комментариев.</p>
+            <p className="no-comments">{t('place.no_comments')}</p>
           )}
         </section>
 
-        {/* Галерея в полноэкранном режиме */}
         {galleryOpen && (
           <div className="gallery-modal">
-            <button
-              onClick={closeGallery}
-              className="close-gallery-btn"
-            >
+            <button onClick={closeGallery} className="close-gallery-btn">
               ×
             </button>
             
             <div className="gallery-content">
-              <button
-                onClick={goToPrev}
-                className="gallery-nav-btn prev-btn"
-              >
+              <button onClick={goToPrev} className="gallery-nav-btn prev-btn">
                 &#10094;
               </button>
               
               <img
                 src={`http://localhost:5000${place.images[currentImageIndex]}`}
-                alt={`Фото ${currentImageIndex + 1}`}
+                alt={`${t('place.photo')} ${currentImageIndex + 1}`}
                 className="gallery-image"
               />
               
-              <button
-                onClick={goToNext}
-                className="gallery-nav-btn next-btn"
-              >
+              <button onClick={goToNext} className="gallery-nav-btn next-btn">
                 &#10095;
               </button>
             </div>

@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useAuth } from '../AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
-import '../styles/Login.css'; // Создай этот файл
+import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import '../styles/Login.css';
+
 function Login() {
+  const { t } = useTranslation( 'loginRegister');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
-  const { login } = useAuth(); // используем login из контекста
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -22,46 +24,51 @@ function Login() {
 
       const data = await res.json();
       if (res.ok) {
-        login(data.user); // сохраняем пользователя в контекст и localStorage
-        navigate('/news'); // или куда нужно перенаправить
-        setMessage(`Добро пожаловать, ${data.user.username}`);
+        login(data.user);
+        navigate('/news');
+        setMessage(t('login.welcome_message', { username: data.user.username }));
       } else {
-        setMessage(data.message || 'Ошибка входа');
+        setMessage(data.message || t('login.error'));
       }
     } catch (err) {
       console.error(err);
-      setMessage('Ошибка подключения к серверу');
+      setMessage(t('login.connection_error'));
     }
   };
 
   return (
     <div className="login-container">
       <div className="login-card">
-        <h2 className="login-title">Вход в систему</h2>
+        <h2 className="login-title">{t('login.title')}</h2>
         <form onSubmit={handleLogin} className="login-form">
           <input
             type="text"
-            placeholder="Логин"
+            placeholder={t('login.username_placeholder')}
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             className="login-input"
+            required
           />
           <input
             type="password"
-            placeholder="Пароль"
+            placeholder={t('login.password_placeholder')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="login-input"
+            required
           />
           <button type="submit" className="login-button">
-            Войти
+            {t('login.submit_button')}
           </button>
         </form>
         <div className="login-footer">
-          Нет аккаунта? <Link to="/register" className="login-link">Зарегистрироваться</Link>
+          {t('login.no_account')}{' '}
+          <Link to="/register" className="login-link">
+            {t('login.register_link')}
+          </Link>
         </div>
         {message && (
-          <p className={`login-message ${message.includes('Добро пожаловать') ? 'success' : 'error'}`}>
+          <p className={`login-message ${message.includes(t('login.welcome_message').split('{')[0]) ? 'success' : 'error'}`}>
             {message}
           </p>
         )}

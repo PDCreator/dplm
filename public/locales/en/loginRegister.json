@@ -1,0 +1,27 @@
+{
+  "login": {
+    "title": "Login",
+    "username_placeholder": "Username",
+    "password_placeholder": "Password",
+    "submit_button": "Sign In",
+    "no_account": "Don't have an account?",
+    "register_link": "Register",
+    "welcome_message": "Welcome, {username}",
+    "error": "Login error",
+    "connection_error": "Server connection error"
+  },
+  "register": {
+    "title": "Registration",
+    "username_placeholder": "Username",
+    "password_placeholder": "Password",
+    "confirm_password_placeholder": "Confirm password",
+    "submit_button": "Sign Up",
+    "welcome_message": "Welcome, {username}",
+    "username_requirements": "Username must contain only Latin letters and numbers",
+    "password_length": "Password must be at least 8 characters",
+    "password_mismatch": "Passwords don't match",
+    "error": "Registration error",
+    "login_after_error": "Registration successful but login failed",
+    "connection_error": "Server unavailable"
+  }
+}

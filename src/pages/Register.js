@@ -1,25 +1,29 @@
 import { useState } from 'react';
 import { useAuth } from '../AuthContext';
 import { useNavigate } from 'react-router-dom';
-import '../styles/Register.css'; // Создай этот файл
+import { useTranslation } from 'react-i18next';
+import '../styles/Register.css';
+
 function Register() {
+  const { t } = useTranslation( 'loginRegister');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
+
   const handleRegister = async (e) => {
     e.preventDefault();
 
     if (!/^[a-zA-Z0-9]+$/.test(username)) {
-      return setMessage('Логин должен содержать только латинские буквы и цифры');
+      return setMessage(t('register.username_requirements'));
     }
     if (password.length < 8) {
-      return setMessage('Пароль должен быть минимум 8 символов');
+      return setMessage(t('register.password_length'));
     }
     if (password.trim() !== confirmPassword.trim()) {
-      return setMessage('Пароли не совпадают');
+      return setMessage(t('register.password_mismatch'));
     }
 
     try {
@@ -32,10 +36,9 @@ function Register() {
       const data = await res.json();
 
       if (!res.ok) {
-        return setMessage(data.message || 'Ошибка регистрации');
+        return setMessage(data.message || t('register.error'));
       }
 
-      // После успешной регистрации логиним пользователя
       const loginRes = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -46,16 +49,16 @@ function Register() {
 
       if (loginRes.ok && loginData.user) {
         login(loginData.user);
-        setMessage(`Добро пожаловать, ${loginData.user.username}`);
+        setMessage(t('register.welcome_message', { username: loginData.user.username }));
         setUsername('');
         setPassword('');
         setConfirmPassword('');
-        navigate('/news'); // или куда нужно перенаправить
+        navigate('/news');
       } else {
-        setMessage('Регистрация прошла, но вход не удался');
+        setMessage(t('register.login_after_error'));
       }
     } catch (err) {
-      setMessage('Сервер недоступен');
+      setMessage(t('register.connection_error'));
       console.error(err);
     }
   };
@@ -63,36 +66,43 @@ function Register() {
   return (
     <div className="register-container">
       <div className="register-card">
-        <h2 className="register-title">Регистрация</h2>
+        <h2 className="register-title">{t('register.title')}</h2>
         <form onSubmit={handleRegister} className="register-form">
           <input
             type="text"
-            placeholder="Логин"
+            placeholder={t('register.username_placeholder')}
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             className="register-input"
+            required
           />
           <input
             type="password"
-            placeholder="Пароль"
+            placeholder={t('register.password_placeholder')}
             value={password}
             autoComplete="off"
             onChange={(e) => setPassword(e.target.value)}
             className="register-input"
+            required
           />
           <input
             type="password"
-            placeholder="Повторите пароль"
+            placeholder={t('register.confirm_password_placeholder')}
             value={confirmPassword}
             autoComplete="off"
             onChange={(e) => setConfirmPassword(e.target.value)}
             className="register-input"
+            required
           />
           <button type="submit" className="register-button">
-            Зарегистрироваться
+            {t('register.submit_button')}
           </button>
         </form>
-        {message && <p className={`register-message ${message.includes('Добро пожаловать') ? 'success' : 'error'}`}>{message}</p>}
+        {message && (
+          <p className={`register-message ${message.includes(t('register.welcome_message').split('{')[0]) ? 'success' : 'error'}`}>
+            {message}
+          </p>
+        )}
       </div>
     </div>
   );

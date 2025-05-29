@@ -1,0 +1,27 @@
+{
+  "login": {
+    "title": "Вход в систему",
+    "username_placeholder": "Логин",
+    "password_placeholder": "Пароль",
+    "submit_button": "Войти",
+    "no_account": "Нет аккаунта?",
+    "register_link": "Зарегистрироваться",
+    "welcome_message": "Добро пожаловать, {username}",
+    "error": "Ошибка входа",
+    "connection_error": "Ошибка подключения к серверу"
+  },
+  "register": {
+    "title": "Регистрация",
+    "username_placeholder": "Логин",
+    "password_placeholder": "Пароль",
+    "confirm_password_placeholder": "Повторите пароль",
+    "submit_button": "Зарегистрироваться",
+    "welcome_message": "Добро пожаловать, {username}",
+    "username_requirements": "Логин должен содержать только латинские буквы и цифры",
+    "password_length": "Пароль должен быть минимум 8 символов",
+    "password_mismatch": "Пароли не совпадают",
+    "error": "Ошибка регистрации",
+    "login_after_error": "Регистрация прошла, но вход не удался",
+    "connection_error": "Сервер недоступен"
+  }
+}
