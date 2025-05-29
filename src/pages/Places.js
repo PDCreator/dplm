@@ -10,12 +10,40 @@ function Places() {
   const [search, setSearch] = useState('');
   const [availableTags, setAvailableTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [selectedCity, setSelectedCity] = useState(null);
+
+  // Загружаем города отдельно
+  const fetchCities = async () => {
+    try {
+      const res = await fetch(`${API}/places/tags?include_cities=true`);
+      const data = await res.json();
+      setCities(data.filter(tag => tag.is_city));
+    } catch (err) {
+      console.error('Error loading cities:', err);
+    }
+  };
+
+  // Загружаем только обычные теги (не города)
+  const fetchTags = () => {
+    fetch(`${API}/places/tags?include_cities=false`)
+      .then(res => res.json())
+      .then(data => setAvailableTags(data))
+      .catch(err => console.error(t('places.tags_fetch_error'), err));
+  };
 
   const fetchPlaces = () => {
     const query = new URLSearchParams();
     if (search) query.append('search', search);
-    if (selectedTags.length > 0) {
-      query.append('tags', selectedTags.map(tag => tag.id).join(','));
+    
+    // Собираем все выбранные теги (включая город)
+    const allSelectedTagIds = [...selectedTags];
+    if (selectedCity) {
+      allSelectedTagIds.push(selectedCity);
+    }
+    
+    if (allSelectedTagIds.length > 0) {
+      query.append('tags', allSelectedTagIds.map(tag => tag.id).join(','));
     }
 
     fetch(`${API}/places?${query.toString()}`)
@@ -24,17 +52,16 @@ function Places() {
       .catch(err => console.error(t('places.fetch_error'), err));
   };
 
-  const fetchTags = () => {
-    fetch(`${API}/places/tags`)
-      .then(res => res.json())
-      .then(data => setAvailableTags(data))
-      .catch(err => console.error(t('places.tags_fetch_error'), err));
-  };
-
   useEffect(() => {
     fetchPlaces();
     fetchTags();
+    fetchCities();
   }, []);
+
+  // Добавляем обработчик изменения города
+  useEffect(() => {
+    fetchPlaces();
+  }, [selectedCity, selectedTags, search]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -51,11 +78,33 @@ function Places() {
     setSelectedTags(selectedTags.filter(tag => tag.id !== tagId));
   };
 
+  // Фильтруем выбранные теги для отображения (исключаем города)
+  const displaySelectedTags = selectedTags.filter(tag => !tag.is_city);
+
   return (
     <div className="page-container">
       <div className="places-header">
         <h1>{t('places.all_places')}</h1>
         
+        {/* Выбор города */}
+        <div className="city-filter">
+          <select
+            value={selectedCity?.id || ''}
+            onChange={(e) => {
+              const cityId = e.target.value;
+              setSelectedCity(cityId ? cities.find(c => c.id == cityId) : null);
+            }}
+            className="city-select"
+          >
+            <option value="">{t('places.all_cities')}</option>
+            {cities.map(city => (
+              <option key={city.id} value={city.id}>
+                {city.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <form onSubmit={handleSearchSubmit} className="search-form">
           <div className="search-input-group">
             <input
@@ -68,8 +117,9 @@ function Places() {
             <button type="submit" className="search-btn">{t('places.search_button')}</button>
           </div>
 
+          {/* Отображаем только обычные теги (не города) */}
           <div className="selected-tags">
-            {selectedTags.map(tag => (
+            {displaySelectedTags.map(tag => (
               <span 
                 key={tag.id} 
                 className="selected-tag"
@@ -87,19 +137,22 @@ function Places() {
           </div>
         </form>
 
+        {/* Список обычных тегов (не городов) */}
         <div className="tags-filter">
           <h3>{t('places.filter_by_tags')}:</h3>
           <div className="tags-list">
-            {availableTags.map(tag => (
-              <button
-                key={tag.id}
-                type="button"
-                onClick={() => handleTagSelect(tag)}
-                className={`tag-btn ${selectedTags.some(t => t.id === tag.id) ? 'active' : ''}`}
-              >
-                {tag.name}
-              </button>
-            ))}
+            {availableTags
+              .filter(tag => !tag.is_city) // Дополнительная фильтрация на случай если пришли города
+              .map(tag => (
+                <button
+                  key={tag.id}
+                  type="button"
+                  onClick={() => handleTagSelect(tag)}
+                  className={`tag-btn ${selectedTags.some(t => t.id === tag.id) ? 'active' : ''}`}
+                >
+                  {tag.name}
+                </button>
+              ))}
           </div>
         </div>
       </div>

@@ -7,6 +7,7 @@
     "no_results": "No se encontraron resultados",
     "try_changing_search": "Intente cambiar los criterios de búsqueda",
     "fetch_error": "Error al cargar lugares",
-    "tags_fetch_error": "Error al cargar etiquetas"
+    "tags_fetch_error": "Error al cargar etiquetas",
+    "all_cities": "Todas las ciudades"
   }
 }

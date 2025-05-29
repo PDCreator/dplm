@@ -238,23 +238,29 @@ router.delete('/:id', (req, res) => {
   });
 });
 
-// Получить все теги
+// В роуте для получения тегов добавим фильтр
 router.get('/tags', (req, res) => {
-  db.query('SELECT id, name FROM tags ORDER BY name', (err, results) => {
+  const { include_cities } = req.query;
+  let query = 'SELECT id, name, is_city FROM tags ORDER BY name';
+  
+  if (include_cities === 'false') {
+    query = 'SELECT id, name, is_city FROM tags WHERE is_city = FALSE ORDER BY name';
+  }
+
+  db.query(query, (err, results) => {
     if (err) return res.status(500).json({ error: 'Ошибка при получении тегов' });
     res.json(results);
   });
 });
 
-// Добавить новый тег
+// В роуте добавления тега
 router.post('/tags', (req, res) => {
-  const { name } = req.body;
+  const { name, is_city } = req.body;
   
   if (!name || !name.trim()) {
     return res.status(400).json({ error: 'Название тега обязательно' });
   }
 
-  // Проверяем, существует ли уже тег с таким именем
   db.query('SELECT id FROM tags WHERE name = ?', [name.trim()], (err, results) => {
     if (err) return res.status(500).json({ error: 'Ошибка при проверке тега' });
     
@@ -262,16 +268,19 @@ router.post('/tags', (req, res) => {
       return res.status(400).json({ error: 'Тег с таким именем уже существует' });
     }
 
-    // Добавляем новый тег
-    db.query('INSERT INTO tags (name) VALUES (?)', [name.trim()], (err, result) => {
-      if (err) return res.status(500).json({ error: 'Ошибка при добавлении тега' });
-      
-      res.json({
-        id: result.insertId,
-        name: name.trim(),
-        message: 'Тег успешно добавлен'
-      });
-    });
+    db.query('INSERT INTO tags (name, is_city) VALUES (?, ?)', 
+      [name.trim(), Boolean(is_city)], 
+      (err, result) => {
+        if (err) return res.status(500).json({ error: 'Ошибка при добавлении тега' });
+        
+        res.json({
+          id: result.insertId,
+          name: name.trim(),
+          is_city: Boolean(is_city),
+          message: 'Тег успешно добавлен'
+        });
+      }
+    );
   });
 });
 // Удалить тег

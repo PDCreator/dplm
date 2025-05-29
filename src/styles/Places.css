@@ -190,3 +190,15 @@
     color: var(--text-light);
     margin: 0;
 }
+
+.city-filter {
+    margin-bottom: 20px;
+}
+
+.city-select {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    font-size: 16px;
+    min-width: 200px;
+}

@@ -35,6 +35,7 @@ function Admin() {
   const [editingPlaceId, setEditingPlaceId] = useState(null);
   const [tagToDelete, setTagToDelete] = useState('');
   const [isDeletingTag, setIsDeletingTag] = useState(false);
+  const [isCityTag, setIsCityTag] = useState(false);
 
 
   // === Пользователи ===
@@ -119,6 +120,7 @@ function Admin() {
     setSelectedTags(selectedTags.filter(tag => tag.id !== tagId));
   };
 
+  // Обновим handleAddNewTag
   const handleAddNewTag = async () => {
     if (!newTagName.trim()) return;
     
@@ -126,16 +128,21 @@ function Admin() {
       const res = await fetch('http://localhost:5000/api/places/tags', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newTagName.trim() })
+        body: JSON.stringify({ 
+          name: newTagName.trim(),
+          is_city: isCityTag 
+        })
       });
       
       if (res.ok) {
         const data = await res.json();
         setAvailableTags([...availableTags, data]);
-        setSelectedTags([...selectedTags, data]);
+        if (isCityTag) {
+          // Если добавляем город, обновляем список городов
+          //fetchCities();
+        }
         setNewTagName('');
-      } else {
-        setPlaceMessage('Ошибка при добавлении тега');
+        setIsCityTag(false);
       }
     } catch (err) {
       console.error('Error adding tag:', err);
@@ -508,23 +515,32 @@ return (
             <label>Управление тегами:</label>
             <div className="admin-tags-management">
               {/* Добавление нового тега */}
-              <div className="admin-new-tag-input">
-                <input
-                  type="text"
-                  placeholder="Название нового тега"
-                  value={newTagName}
-                  onChange={(e) => setNewTagName(e.target.value)}
-                  className="admin-input"
-                />
-                <button 
-                  type="button" 
-                  onClick={handleAddNewTag}
-                  disabled={!newTagName.trim()}
-                  className="admin-button small"
-                >
-                  Добавить
-                </button>
-              </div>
+                <div className="admin-new-tag-input">
+                  <input
+                    type="text"
+                    placeholder="Название нового тега"
+                    value={newTagName}
+                    onChange={(e) => setNewTagName(e.target.value)}
+                    className="admin-input"
+                  />
+                  <label className="admin-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={isCityTag}
+                      onChange={(e) => setIsCityTag(e.target.checked)}
+                      className="admin-checkbox"
+                    />
+                    Это город
+                  </label>
+                  <button 
+                    type="button" 
+                    onClick={handleAddNewTag}
+                    disabled={!newTagName.trim()}
+                    className="admin-button small"
+                  >
+                    Добавить
+                  </button>
+                </div>
 
               {/* Удаление существующего тега */}
               <div className="admin-delete-tag">
