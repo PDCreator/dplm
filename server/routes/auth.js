@@ -85,15 +85,20 @@ router.get('/verify-email', (req, res) => {
   if (!token) return res.status(400).send('Недопустимый токен');
 
   db.query('SELECT * FROM users WHERE email_verification_token = ?', [token], (err, results) => {
-    if (err || results.length === 0) return res.status(400).send('Недействительный токен');
+    if (err || results.length === 0) {
+      // Редирект на страницу с ошибкой (или просто сообщение)
+      return res.redirect('http://localhost:3000/profile?verified=0&error=invalid_token');
+    }
 
     const user = results[0];
     db.query('UPDATE users SET email_verified = 1, email_verification_token = NULL WHERE id = ?', [user.id], (err2) => {
-      if (err2) return res.status(500).send('Ошибка при подтверждении');
-      res.send('Email подтверждён успешно');
+      if (err2) {
+        return res.redirect('http://localhost:3000/profile?verified=0&error=db_error');
+      }
+      // Успешный редирект
+      res.redirect('http://localhost:3000/profile?verified=1');
     });
   });
-  res.redirect('http://localhost:3000/profile?verified=1');
 });
 router.post('/set-email', (req, res) => {
   const { user_id, email } = req.body;
@@ -109,7 +114,7 @@ router.post('/set-email', (req, res) => {
 
     // Отправка письма
     const mailOptions = {
-      from: 'flakerdead@gmail.com',
+      from: process.env.EMAIL_USER,
       to: email,
       subject: 'Подтверждение Email',
       html: `

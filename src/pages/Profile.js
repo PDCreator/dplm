@@ -35,14 +35,14 @@ function Profile() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('verified') === '1') {
-      setMessage(t('messages.emailVerified'));
+      setMessage(t('profile.messages.emailVerified'));
       setEmailVerified(true);
       navigate('/profile', { replace: true });
     }
   }, [location, navigate, t]);
 
   const removeFromFavorites = async (placeId) => {
-    if (!user) return alert(t('messages.loginRequired'));
+    if (!user) return alert(t('profile.messages.loginRequired'));
 
     const res = await fetch(`${API}/favorites/${placeId}`, {
       method: 'DELETE',
