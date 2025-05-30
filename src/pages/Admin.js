@@ -932,11 +932,16 @@ return (
               <div key={suggestion.id} className="admin-list-item">
                 <div className="admin-list-item-header">
                   <h4>{suggestion.title}</h4>
-                  <div className="admin-list-item-meta">
+                  <p className="admin-list-item-meta">
                     <span>От: {suggestion.username}</span>
+                  </p>
+                  <p className="admin-list-item-meta">
                     <span>Дата: {new Date(suggestion.created_at).toLocaleString()}</span>
+                  </p>
+                  <p className="admin-list-item-meta">
                     { <span>Статус: {getStatusText(suggestion.status)}</span> }
-                  </div>
+                  </p>
+                  
                 </div>
                 
                 <p className="admin-list-item-content">{suggestion.description}</p>

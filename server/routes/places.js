@@ -405,7 +405,7 @@ router.post('/suggestions', upload.array('images'), (req, res) => {
 
         // 3. Добавляем изображения (если есть)
         if (files && files.length > 0) {
-          const values = files.map(file => [suggestionId, `/uploads/suggestions/${file.filename}`]);
+          const values = files.map(file => [suggestionId, `/uploads/${file.filename}`]);
           db.query(
             'INSERT INTO place_suggestion_images (suggestion_id, image_url) VALUES ?',
             [values],
