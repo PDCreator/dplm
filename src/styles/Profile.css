@@ -101,6 +101,12 @@
     overflow: hidden;
     box-shadow: var(--shadow);
     transition: all 0.2s;
+    display: flex;
+    /* Добавляем flex */
+    flex-direction: column;
+    /* Вертикальное расположение */
+    height: 100%;
+    /* Занимаем всю доступную высоту */
 }
 
 .favorite-card:hover {
@@ -116,6 +122,8 @@
 
 .favorite-content {
     padding: 1rem;
+    flex-grow: 1;
+    /* Занимает все доступное пространство */
 }
 
 .favorite-title {
@@ -124,13 +132,21 @@
 }
 
 .remove-favorite-btn {
-    width: 100%;
+    margin-top: auto;
+    /* Прижимаем к низу */
+    width: calc(100% - 2rem);
+    /* Учитываем padding */
+    margin-bottom: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    /* Отступы снизу и по бокам */
     padding: 0.5rem;
     background-color: #fff5f5;
     color: #c53030;
     border: 1px solid #fed7d7;
     border-radius: var(--radius);
     font-size: 0.875rem;
+    cursor: pointer;
 }
 
 .remove-favorite-btn:hover {

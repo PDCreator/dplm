@@ -202,3 +202,23 @@
     font-size: 16px;
     min-width: 200px;
 }
+
+.suggest-place-btn {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.suggest-place-btn:hover {
+    background: #45a049;
+}
+
+.places-header-header {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content:space-between;
+    margin-bottom: 15px;
+}

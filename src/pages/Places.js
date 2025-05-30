@@ -92,31 +92,32 @@ function Places() {
       )}
       <div className="places-header">
         <h1>{t('places.all_places')}</h1>
-        <button 
-            onClick={() => setShowSuggestionForm(true)}
-            className="suggest-place-btn"
-          >
-            {t('places.suggest_place')}
-          </button>
-        {/* Выбор города */}
-        <div className="city-filter">
-          <select
-            value={selectedCity?.id || ''}
-            onChange={(e) => {
-              const cityId = e.target.value;
-              setSelectedCity(cityId ? cities.find(c => c.id == cityId) : null);
-            }}
-            className="city-select"
-          >
-            <option value="">{t('places.all_cities')}</option>
-            {cities.map(city => (
-              <option key={city.id} value={city.id}>
-                {city.name}
-              </option>
-            ))}
-          </select>
+        <div className="places-header-header">
+          <button 
+              onClick={() => setShowSuggestionForm(true)}
+              className="suggest-place-btn"
+            >
+              {t('places.suggest_place')}
+            </button>
+          {/* Выбор города */}
+          <div className="city-filter">
+            <select
+              value={selectedCity?.id || ''}
+              onChange={(e) => {
+                const cityId = e.target.value;
+                setSelectedCity(cityId ? cities.find(c => c.id == cityId) : null);
+              }}
+              className="city-select"
+            >
+              <option value="">{t('places.all_cities')}</option>
+              {cities.map(city => (
+                <option key={city.id} value={city.id}>
+                  {city.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-
         <form onSubmit={handleSearchSubmit} className="search-form">
           <div className="search-input-group">
             <input
