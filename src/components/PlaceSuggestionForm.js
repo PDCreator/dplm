@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext';
 import API from './api';
-import '../styles/PlaceSuggestionForm.css';
+import '../styles/Admin.css'; // Используем стили из админки
 
 function PlaceSuggestionForm({ onClose }) {
   const { user } = useAuth();
@@ -20,9 +20,9 @@ function PlaceSuggestionForm({ onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    fetch(`${API}/places/tags?include_cities=false`)
+    fetch(`${API}/places/tags?include_cities=true`)
       .then(res => res.json())
-      .then(setAvailableTags)
+      .then(data => setAvailableTags(data.sort((a, b) => a.name.localeCompare(b.name))))
       .catch(console.error);
   }, []);
 
@@ -95,115 +95,145 @@ function PlaceSuggestionForm({ onClose }) {
   };
 
   return (
-    <div className="suggestion-form-container">
-      <h2>Предложить новое место</h2>
-      {message && <p className={`message ${message.includes('отправлено') ? 'success' : 'error'}`}>{message}</p>}
-      
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Название места:</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Описание:</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={4}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Теги:</label>
-          <div className="tags-selected">
-            {selectedTags.map(tag => (
-              <span key={tag.id} className="tag">
-                {tag.name}
-                <button 
-                  type="button" 
-                  onClick={() => handleTagRemove(tag.id)}
-                  className="tag-remove"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-          
-          <input
-            type="text"
-            placeholder="Добавить теги"
-            value={tagsInput}
-            onChange={handleTagsInputChange}
-            onFocus={() => {
-              const filtered = availableTags.filter(tag => !selectedTags.some(t => t.id === tag.id));
-              setFilteredTags(filtered);
-              setShowTagDropdown(filtered.length > 0);
-            }}
-          />
-          
-          {showTagDropdown && (
-            <ul className="tags-dropdown">
-              {filteredTags.map(tag => (
-                <li 
-                  key={tag.id}
-                  onClick={() => handleTagSelect(tag)}
-                >
-                  {tag.name}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="form-group coords">
-          <div>
-            <label>Широта:</label>
+    <div className="admin-container">
+      <div className="admin-card">
+        <h2 className="admin-title">Предложить новое место</h2>
+        
+        {message && (
+          <p className={`admin-message ${message.includes('отправлено') ? 'success' : 'error'}`}>
+            {message}
+          </p>
+        )}
+        
+        <form onSubmit={handleSubmit} className="admin-form">
+          <div className="form-group">
             <input
               type="text"
+              placeholder="Название места"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              className="admin-input"
+            />
+          </div>
+
+          <div className="form-group">
+            <textarea
+              placeholder="Описание"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              required
+              className="admin-textarea"
+            />
+          </div>
+
+          {/* Теги - стилизованные как в админке */}
+          <div className="admin-tags-container">
+            <label>Теги:</label>
+            <div className="admin-tags-selected">
+              {selectedTags.map(tag => (
+                <span key={tag.id} className="admin-tag">
+                  {tag.name}
+                  <button 
+                    type="button" 
+                    onClick={() => handleTagRemove(tag.id)}
+                    className="admin-tag-remove"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            
+            <input
+              type="text"
+              placeholder="Добавить теги (начните вводить)"
+              value={tagsInput}
+              onChange={handleTagsInputChange}
+              onFocus={() => {
+                const filtered = availableTags.filter(tag => 
+                  !selectedTags.some(t => t.id === tag.id)
+                );
+                setFilteredTags(filtered);
+                setShowTagDropdown(filtered.length > 0);
+              }}
+              className="admin-input"
+            />
+            
+            {showTagDropdown && (
+              <ul className="admin-tags-dropdown">
+                {filteredTags.map(tag => (
+                  <li 
+                    key={tag.id}
+                    onClick={() => handleTagSelect(tag)}
+                    className="admin-tags-dropdown-item"
+                  >
+                    {tag.name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Координаты */}
+          <div className="admin-coords">
+            <input
+              type="text"
+              placeholder="Широта"
               value={latitude}
               onChange={(e) => setLatitude(e.target.value)}
+              className="admin-input half"
             />
-          </div>
-          <div>
-            <label>Долгота:</label>
             <input
               type="text"
+              placeholder="Долгота"
               value={longitude}
               onChange={(e) => setLongitude(e.target.value)}
+              className="admin-input half"
             />
           </div>
-        </div>
 
-        <div className="form-group">
-          <label>Изображения:</label>
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={(e) => setImages(Array.from(e.target.files))}
-          />
-          {images.length > 0 && (
-            <div className="selected-images">
-              Выбрано файлов: {images.length}
-            </div>
-          )}
-        </div>
+          {/* Изображения */}
+          <div className="admin-images">
+            <label>Загрузить изображения (можно несколько):</label>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={(e) => setImages(Array.from(e.target.files))}
+              className="admin-file-input"
+            />
+            {images.length > 0 && (
+              <div className="admin-selected-images">
+                <p>Выбранные для загрузки изображения:</p>
+                <ul className="admin-images-list">
+                  {images.map((file, i) => (
+                    <li key={i}>{file.name}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
 
-        <div className="form-actions">
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Отправка...' : 'Отправить на модерацию'}
-          </button>
-          <button type="button" onClick={onClose}>Отмена</button>
-        </div>
-      </form>
+          <div className="admin-form-actions">
+            <button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="admin-button primary"
+            >
+              {isSubmitting ? 'Отправка...' : 'Отправить на модерацию'}
+            </button>
+            <button 
+              type="button" 
+              onClick={onClose}
+              className="admin-button"
+            >
+              Отмена
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
