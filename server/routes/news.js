@@ -7,15 +7,15 @@ const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'flakerdead@gmail.com',
-    pass: 'lwxt qcra ygmy nprf'
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
   }
 });
 
 // 📤 Функция отправки письма
 function sendEmail(to, subject, html) {
   return transporter.sendMail({
-    from: 'flakerdead@gmail.com',
+    from: process.env.EMAIL_USER,
     to,
     subject,
     html

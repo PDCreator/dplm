@@ -8,6 +8,11 @@
     "try_changing_search": "Попробуйте изменить параметры поиска",
     "fetch_error": "Ошибка при загрузке мест",
     "tags_fetch_error": "Ошибка при загрузке тегов",
-    "all_cities": "Все города"
+    "all_cities": "Все города",
+    "suggest_place": "Предложить место",
+    "suggestion_success": "Ваше предложение отправлено на модерацию. Вы получите уведомление по email о результате.",
+    "suggestion_pending": "На модерации",
+    "suggestion_approved": "Одобрено",
+    "suggestion_rejected": "Отклонено"
   }
 }

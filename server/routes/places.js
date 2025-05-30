@@ -4,7 +4,7 @@ const db = require('../db');
 const upload = require('../middleware/upload');
 const fs = require('fs');
 const path = require('path');
-
+const { sendPlaceApprovalEmail, sendPlaceRejectionEmail } = require('../middleware/mailer');
 // Получить все места с фильтрацией по поиску и тегам
 router.get('/', (req, res) => {
   const { search, tags } = req.query;
@@ -351,6 +351,354 @@ router.get('/names', (req, res) => {
   });
 });
 
+// Добавить предложение места (исправленная callback-версия)
+router.post('/suggestions', upload.array('images'), (req, res) => {
+  const { user_id, title, description, latitude, longitude, tagIds } = req.body;
+  const files = req.files;
+  const parsedTagIds = tagIds ? JSON.parse(tagIds) : [];
+
+  // Начинаем транзакцию
+  db.beginTransaction((beginErr) => {
+    if (beginErr) {
+      console.error('Ошибка начала транзакции:', beginErr);
+      return res.status(500).json({ error: 'Ошибка начала транзакции' });
+    }
+
+    // 1. Добавляем основную информацию о месте
+    db.query(
+      'INSERT INTO place_suggestions (user_id, title, description, latitude, longitude) VALUES (?, ?, ?, ?, ?)',
+      [user_id, title, description, latitude, longitude],
+      (insertErr, result) => {
+        if (insertErr) {
+          return db.rollback(() => {
+            console.error('Ошибка при добавлении предложения:', insertErr);
+            res.status(500).json({ error: 'Ошибка при добавлении предложения' });
+          });
+        }
+
+        const suggestionId = result.insertId;
+        let completedOperations = 0;
+        const totalOperations = (parsedTagIds.length > 0 ? 1 : 0) + (files && files.length > 0 ? 1 : 0);
+
+        // Если нет дополнительных операций (тегов и изображений)
+        if (totalOperations === 0) {
+          return commitTransaction();
+        }
+
+        // 2. Добавляем теги (если есть)
+        if (parsedTagIds.length > 0) {
+          const tagValues = parsedTagIds.map(tagId => [suggestionId, tagId]);
+          db.query(
+            'INSERT INTO place_suggestion_tags (suggestion_id, tag_id) VALUES ?',
+            [tagValues],
+            (tagsErr) => {
+              if (tagsErr) {
+                return db.rollback(() => {
+                  console.error('Ошибка при добавлении тегов:', tagsErr);
+                  res.status(500).json({ error: 'Ошибка при добавлении тегов' });
+                });
+              }
+              checkCompletion();
+            }
+          );
+        }
+
+        // 3. Добавляем изображения (если есть)
+        if (files && files.length > 0) {
+          const values = files.map(file => [suggestionId, `/uploads/suggestions/${file.filename}`]);
+          db.query(
+            'INSERT INTO place_suggestion_images (suggestion_id, image_url) VALUES ?',
+            [values],
+            (imagesErr) => {
+              if (imagesErr) {
+                return db.rollback(() => {
+                  console.error('Ошибка при добавлении изображений:', imagesErr);
+                  res.status(500).json({ error: 'Ошибка при добавлении изображений' });
+                });
+              }
+              checkCompletion();
+            }
+          );
+        }
+
+        function checkCompletion() {
+          completedOperations++;
+          if (completedOperations === totalOperations) {
+            commitTransaction();
+          }
+        }
+
+        function commitTransaction() {
+          db.commit((commitErr) => {
+            if (commitErr) {
+              return db.rollback(() => {
+                console.error('Ошибка фиксации транзакции:', commitErr);
+                res.status(500).json({ error: 'Ошибка фиксации транзакции' });
+              });
+            }
+            res.json({ message: 'Предложение места отправлено на модерацию', id: suggestionId });
+          });
+        }
+      }
+    );
+  });
+});
+
+// Получить предложения для админа
+router.get('/suggestions', (req, res) => {
+  db.query(`
+    SELECT ps.*, u.username
+    FROM place_suggestions ps
+    JOIN users u ON ps.user_id = u.id
+    ORDER BY ps.created_at DESC
+  `, (err, results) => {
+    if (err) return res.status(500).json({ error: 'Ошибка при получении предложений', err });
+    res.json(results);
+  });
+});
+
+// Получить детали предложения
+router.get('/suggestions/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [suggestion] = await db.query('SELECT * FROM place_suggestions WHERE id = ?', [id]);
+    if (!suggestion) return res.status(404).json({ error: 'Предложение не найдено' });
+
+    const [images] = await db.query('SELECT image_url FROM place_suggestion_images WHERE suggestion_id = ?', [id]);
+    const [tags] = await db.query('SELECT tag_id FROM place_suggestion_tags WHERE suggestion_id = ?', [id]);
+
+    res.json({
+      ...suggestion,
+      images: images.map(img => img.image_url),
+      tagIds: tags.map(t => t.tag_id)
+    });
+  } catch (err) {
+    console.error('Ошибка при получении предложения:', err);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+// Одобрить предложение (callback-версия)
+router.post('/suggestions/:id/approve', (req, res) => {
+  const { id } = req.params;
+  const { admin_comment } = req.body;
+
+  // Начинаем транзакцию
+  db.beginTransaction((beginErr) => {
+    if (beginErr) {
+      console.error('Ошибка начала транзакции:', beginErr);
+      return res.status(500).json({ error: 'Ошибка начала транзакции' });
+    }
+
+    // 1. Получаем предложение
+    db.query('SELECT * FROM place_suggestions WHERE id = ?', [id], (selectErr, [suggestion]) => {
+      if (selectErr || !suggestion) {
+        return db.rollback(() => {
+          console.error('Ошибка при получении предложения:', selectErr);
+          res.status(404).json({ error: 'Предложение не найдено' });
+        });
+      }
+
+      // 2. Создаем новое место
+      db.query(
+        'INSERT INTO places (title, description, latitude, longitude) VALUES (?, ?, ?, ?)',
+        [suggestion.title, suggestion.description, suggestion.latitude, suggestion.longitude],
+        (insertErr, result) => {
+          if (insertErr) {
+            return db.rollback(() => {
+              console.error('Ошибка при создании места:', insertErr);
+              res.status(500).json({ error: 'Ошибка при создании места' });
+            });
+          }
+
+          const placeId = result.insertId;
+          let completedOperations = 0;
+          const totalOperations = 2; // Перенос тегов и изображений
+
+          // 3. Переносим теги
+          db.query(`
+            INSERT INTO place_tags (place_id, tag_id)
+            SELECT ?, tag_id FROM place_suggestion_tags WHERE suggestion_id = ?
+          `, [placeId, id], (tagsErr) => {
+            if (tagsErr) {
+              return db.rollback(() => {
+                console.error('Ошибка при переносе тегов:', tagsErr);
+                res.status(500).json({ error: 'Ошибка при переносе тегов' });
+              });
+            }
+            checkCompletion();
+          });
+
+          // 4. Переносим изображения
+          db.query(`
+            INSERT INTO place_images (place_id, image_url)
+            SELECT ?, image_url FROM place_suggestion_images WHERE suggestion_id = ?
+          `, [placeId, id], (imagesErr) => {
+            if (imagesErr) {
+              return db.rollback(() => {
+                console.error('Ошибка при переносе изображений:', imagesErr);
+                res.status(500).json({ error: 'Ошибка при переносе изображений' });
+              });
+            }
+            checkCompletion();
+          });
+
+          function checkCompletion() {
+            completedOperations++;
+            if (completedOperations === totalOperations) {
+              // 5. Обновляем статус предложения
+              db.query(`
+                UPDATE place_suggestions 
+                SET status = 'approved', admin_comment = ?
+                WHERE id = ?
+              `, [admin_comment, id], (updateErr) => {
+                if (updateErr) {
+                  return db.rollback(() => {
+                    console.error('Ошибка при обновлении статуса:', updateErr);
+                    res.status(500).json({ error: 'Ошибка при обновлении статуса' });
+                  });
+                }
+
+                // 6. Получаем email пользователя
+                db.query(
+                  'SELECT email, email_verified FROM users WHERE id = ?', 
+                  [suggestion.user_id], 
+                  (userErr, [user]) => {
+                    if (userErr || !user) {
+                      return db.rollback(() => {
+                        console.error('Ошибка при получении пользователя:', userErr);
+                        res.status(500).json({ error: 'Ошибка при получении пользователя' });
+                      });
+                    }
+
+                    // Фиксируем транзакцию
+                    db.commit((commitErr) => {
+                      if (commitErr) {
+                        return db.rollback(() => {
+                          console.error('Ошибка фиксации транзакции:', commitErr);
+                          res.status(500).json({ error: 'Ошибка фиксации транзакции' });
+                        });
+                      }
+
+                      // 7. Отправляем email если подтвержден
+                      if (user.email_verified) {
+                        sendPlaceApprovalEmail(
+                          user.email,
+                          suggestion.title,
+                          placeId,
+                          admin_comment
+                        ).catch(emailErr => {
+                          console.error('Ошибка при отправке email:', emailErr);
+                        });
+                      }
+
+                      res.json({ 
+                        message: 'Место одобрено и добавлено',
+                        placeId
+                      });
+                    });
+                  }
+                );
+              });
+            }
+          }
+        }
+      );
+    });
+  });
+});
+
+// Отклонить предложение (callback-версия)
+router.post('/suggestions/:id/reject', (req, res) => {
+  const { id } = req.params;
+  const { admin_comment } = req.body;
+
+  // Начинаем транзакцию
+  db.beginTransaction((beginErr) => {
+    if (beginErr) {
+      console.error('Ошибка начала транзакции:', beginErr);
+      return res.status(500).json({ error: 'Ошибка начала транзакции' });
+    }
+
+    // 1. Получаем user_id из предложения
+    db.query('SELECT user_id FROM place_suggestions WHERE id = ?', [id], (selectErr, [suggestion]) => {
+      if (selectErr || !suggestion) {
+        return db.rollback(() => {
+          console.error('Ошибка при получении предложения:', selectErr);
+          res.status(404).json({ error: 'Предложение не найдено' });
+        });
+      }
+
+      // 2. Обновляем статус предложения
+      db.query(`
+        UPDATE place_suggestions 
+        SET status = 'rejected', admin_comment = ?
+        WHERE id = ?
+      `, [admin_comment, id], (updateErr) => {
+        if (updateErr) {
+          return db.rollback(() => {
+            console.error('Ошибка при обновлении статуса:', updateErr);
+            res.status(500).json({ error: 'Ошибка при обновлении статуса' });
+          });
+        }
+
+        // 3. Получаем email пользователя
+        db.query(
+          'SELECT email, email_verified FROM users WHERE id = ?', 
+          [suggestion.user_id], 
+          (userErr, [user]) => {
+            if (userErr || !user) {
+              return db.rollback(() => {
+                console.error('Ошибка при получении пользователя:', userErr);
+                res.status(500).json({ error: 'Ошибка при получении пользователя' });
+              });
+            }
+
+            // 4. Получаем название предложения для email
+            db.query(
+              'SELECT title FROM place_suggestions WHERE id = ?', 
+              [id], 
+              (titleErr, [suggestionData]) => {
+                if (titleErr) {
+                  return db.rollback(() => {
+                    console.error('Ошибка при получении названия:', titleErr);
+                    res.status(500).json({ error: 'Ошибка при получении названия' });
+                  });
+                }
+
+                // Фиксируем транзакцию
+                db.commit((commitErr) => {
+                  if (commitErr) {
+                    return db.rollback(() => {
+                      console.error('Ошибка фиксации транзакции:', commitErr);
+                      res.status(500).json({ error: 'Ошибка фиксации транзакции' });
+                    });
+                  }
+
+                  // 5. Отправляем email если подтвержден
+                  if (user.email_verified) {
+                    sendPlaceRejectionEmail(
+                      user.email,
+                      suggestionData.title,
+                      admin_comment
+                    ).catch(emailErr => {
+                      console.error('Ошибка при отправке email:', emailErr);
+                    });
+                  }
+
+                  res.json({ 
+                    message: 'Предложение отклонено'
+                  });
+                });
+              }
+            );
+          }
+        );
+      });
+    });
+  });
+});
 // Получить одно место по ID с изображениями и тегами
 router.get('/:id', (req, res) => {
   const { id } = req.params;
@@ -387,5 +735,9 @@ router.get('/:id', (req, res) => {
     });
   });
 });
+
+
+
+
 
 module.exports = router;

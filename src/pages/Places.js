@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import API from '../components/api';
 import '../styles/Places.css';
-
+import PlaceSuggestionForm from '../components/PlaceSuggestionForm';
 function Places() {
   const { t } = useTranslation('places');
   const [places, setPlaces] = useState([]);
@@ -12,6 +12,8 @@ function Places() {
   const [selectedTags, setSelectedTags] = useState([]);
   const [cities, setCities] = useState([]);
   const [selectedCity, setSelectedCity] = useState(null);
+  const [showSuggestionForm, setShowSuggestionForm] = useState(false);
+  
 
   // Загружаем города отдельно
   const fetchCities = async () => {
@@ -83,9 +85,19 @@ function Places() {
 
   return (
     <div className="page-container">
+      {showSuggestionForm && (
+        <div className="modal-overlay">
+          <PlaceSuggestionForm onClose={() => setShowSuggestionForm(false)} />
+        </div>
+      )}
       <div className="places-header">
         <h1>{t('places.all_places')}</h1>
-        
+        <button 
+            onClick={() => setShowSuggestionForm(true)}
+            className="suggest-place-btn"
+          >
+            {t('places.suggest_place')}
+          </button>
         {/* Выбор города */}
         <div className="city-filter">
           <select

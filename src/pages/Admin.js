@@ -36,6 +36,7 @@ function Admin() {
   const [tagToDelete, setTagToDelete] = useState('');
   const [isDeletingTag, setIsDeletingTag] = useState(false);
   const [isCityTag, setIsCityTag] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
 
 
   // === Пользователи ===
@@ -49,6 +50,7 @@ function Admin() {
       fetchPlaces();
       fetchUsers();
       fetchTags();
+      fetchSuggestions();
     }
   }, [user]);
 
@@ -79,6 +81,12 @@ function Admin() {
     const data = await res.json();
     // Сортируем теги по имени для удобства выбора
     setAvailableTags(data.sort((a, b) => a.name.localeCompare(b.name)));
+  };
+  const fetchSuggestions = async () => {
+    const res = await fetch('http://localhost:5000/api/places/suggestions');
+    const data = await res.json();
+    setSuggestions(data);
+    console.log(data)
   };
 
   // Фильтр пользователей по логину
@@ -333,6 +341,40 @@ function Admin() {
     }
   };
 
+  // === Предложения ===
+  const handleApproveSuggestion = async (id, adminComment) => {
+    const res = await fetch(`http://localhost:5000/api/places/suggestions/${id}/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_comment: adminComment }),
+    });
+
+    if (res.ok) {
+      fetchSuggestions();
+      fetchPlaces(); // Обновляем список мест
+    }
+  };
+
+  const handleRejectSuggestion = async (id, adminComment) => {
+    const res = await fetch(`http://localhost:5000/api/places/suggestions/${id}/reject`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_comment: adminComment }),
+    });
+
+    if (res.ok) {
+      fetchSuggestions();
+    }
+  };
+
+  const getStatusText = (status) => {
+  const statusMap = {
+    pending: 'На модерации',
+    approved: 'Одобрено',
+    rejected: 'Отклонено'
+  };
+  return statusMap[status] || status;
+};
 return (
   <div className="admin-container">
     <div className="admin-card">
@@ -357,6 +399,12 @@ return (
           className={`admin-tab ${activeTab === 'users' ? 'active' : ''}`}
         >
           Пользователи
+        </button>
+        <button 
+          onClick={() => setActiveTab('suggestions')} 
+          className={`admin-tab ${activeTab === 'suggestions' ? 'active' : ''}`}
+        >
+          Предложения
         </button>
       </div>
 
@@ -873,6 +921,59 @@ return (
               </div>
             </form>
           )}
+        </div>
+      )}
+      {activeTab === 'suggestions' && (
+        <div className="admin-section">
+          <h3 className="admin-subtitle">Предложенные места</h3>
+          
+          <div className="admin-list">
+            {suggestions.map(suggestion => (
+              <div key={suggestion.id} className="admin-list-item">
+                <div className="admin-list-item-header">
+                  <h4>{suggestion.title}</h4>
+                  <div className="admin-list-item-meta">
+                    <span>От: {suggestion.username}</span>
+                    <span>Дата: {new Date(suggestion.created_at).toLocaleString()}</span>
+                    { <span>Статус: {getStatusText(suggestion.status)}</span> }
+                  </div>
+                </div>
+                
+                <p className="admin-list-item-content">{suggestion.description}</p>
+                
+                {suggestion.status === 'pending' && (
+                  <div className="suggestion-actions">
+                    <button 
+                      onClick={() => {
+                        const comment = prompt('Введите комментарий для пользователя (необязательно):');
+                        handleApproveSuggestion(suggestion.id, comment);
+                      }}
+                      className="admin-button primary"
+                    >
+                      Одобрить
+                    </button>
+                    <button 
+                      onClick={() => {
+                        const comment = prompt('Введите комментарий для пользователя:');
+                        if (comment !== null) {
+                          handleRejectSuggestion(suggestion.id, comment);
+                        }
+                      }}
+                      className="admin-button danger"
+                    >
+                      Отклонить
+                    </button>
+                  </div>
+                )}
+                
+                {suggestion.admin_comment && (
+                  <p className="admin-comment">
+                    <strong>Комментарий модератора:</strong> {suggestion.admin_comment}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
