@@ -699,6 +699,100 @@ router.post('/suggestions/:id/reject', (req, res) => {
     });
   });
 });
+
+// Получить рейтинг места (и оценку текущего пользователя если есть)
+router.get('/:id/rating', (req, res) => {
+  const { id } = req.params;
+  const { user_id } = req.query;
+
+  // Получаем средний рейтинг и количество оценок
+  db.query(
+    `SELECT 
+      rating,
+      (SELECT COUNT(*) FROM place_ratings WHERE place_id = ?) as votes_count
+     FROM places WHERE id = ?`,
+    [id, id],
+    (err, [place]) => {
+      if (err) return res.status(500).json({ error: 'Ошибка при получении рейтинга' });
+      if (!place) return res.status(404).json({ error: 'Место не найдено' });
+
+      // Если пользователь авторизован, получаем его оценку
+      if (user_id) {
+        db.query(
+          'SELECT value FROM place_ratings WHERE place_id = ? AND user_id = ?',
+          [id, user_id],
+          (userErr, [rating]) => {
+            if (userErr) return res.status(500).json({ error: 'Ошибка при получении оценки пользователя' });
+            
+            res.json({
+              avgRating: place.rating,
+              userRating: rating ? rating.value : 0,
+              votesCount: place.votes_count || 0
+            });
+          }
+        );
+      } else {
+        res.json({ 
+          avgRating: place.rating, 
+          userRating: 0,
+          votesCount: place.votes_count || 0
+        });
+      }
+    }
+  );
+});
+
+// Добавить/обновить оценку
+router.post('/:id/rating', (req, res) => {
+  const { id } = req.params;
+  const { user_id, value } = req.body;
+
+  if (!user_id || !value || value < 1 || value > 5) {
+    return res.status(400).json({ error: 'Некорректные данные' });
+  }
+
+  // Начинаем транзакцию
+  db.beginTransaction(err => {
+    if (err) return res.status(500).json({ error: 'Ошибка начала транзакции' });
+
+    // 1. Добавляем/обновляем оценку пользователя
+    db.query(
+      `INSERT INTO place_ratings (place_id, user_id, value) 
+       VALUES (?, ?, ?) 
+       ON DUPLICATE KEY UPDATE value = ?`,
+      [id, user_id, value, value],
+      (rateErr) => {
+        if (rateErr) return db.rollback(() => {
+          res.status(500).json({ error: 'Ошибка при сохранении оценки' });
+        });
+
+        // 2. Пересчитываем средний рейтинг места
+        db.query(
+          `UPDATE places p
+           SET rating = (
+             SELECT AVG(value) FROM place_ratings WHERE place_id = ?
+           )
+           WHERE id = ?`,
+          [id, id],
+          (updateErr) => {
+            if (updateErr) return db.rollback(() => {
+              res.status(500).json({ error: 'Ошибка при обновлении рейтинга' });
+            });
+
+            // Фиксируем транзакцию
+            db.commit(commitErr => {
+              if (commitErr) return db.rollback(() => {
+                res.status(500).json({ error: 'Ошибка фиксации транзакции' });
+              });
+
+              res.json({ message: 'Оценка сохранена' });
+            });
+          }
+        );
+      }
+    );
+  });
+});
 // Получить одно место по ID с изображениями и тегами
 router.get('/:id', (req, res) => {
   const { id } = req.params;

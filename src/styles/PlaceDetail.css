@@ -260,3 +260,61 @@
     margin-top: 20px;
     font-size: 18px;
 }
+
+/* Стили для рейтинга */
+.rating-section {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.rating-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.rating-stars {
+    display: flex;
+    gap: 5px;
+}
+
+.rating-stars .star {
+    font-size: 24px;
+    color: #ccc;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.rating-stars .star.filled {
+    color: #ffc107;
+}
+
+.rating-value {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* Обновлённые стили для рейтинга */
+.rating-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.rating-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.rating-value {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.votes-count {
+    font-size: 14px;
+    color: #666;
+}

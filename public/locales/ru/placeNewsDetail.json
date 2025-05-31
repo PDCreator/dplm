@@ -20,7 +20,11 @@
     "login_required_like": "Войдите, чтобы ставить лайки",
     "login_required_comment": "Войдите, чтобы комментировать",
     "login_required_favorite": "Войдите, чтобы добавить место в избранное",
-    "already_favorited": "Это место уже в вашем избранном"
+    "already_favorited": "Это место уже в вашем избранном",
+    "rating": "Рейтинг",
+    "rating_out_of_5": "из 5",
+    "login_required_rating": "Войдите, чтобы оценить это место",
+    "votes": "голосов"
   },
   "news": {
     "published_on": "Опубликовано:",

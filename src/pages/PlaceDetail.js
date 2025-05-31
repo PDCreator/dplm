@@ -18,6 +18,9 @@ function PlaceDetail() {
   const [isFavorited, setIsFavorited] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [userRating, setUserRating] = useState(0);
+  const [avgRating, setAvgRating] = useState(0);
+  const [votesCount, setVotesCount] = useState(0);
 
   useEffect(() => {
   if (!place || !place.latitude || !place.longitude) return;
@@ -99,6 +102,49 @@ function PlaceDetail() {
     }
   }, [id, user]);
 
+// Загрузка рейтинга при монтировании
+  useEffect(() => {
+    if (!place) return;
+    
+    const ratingUrl = user 
+      ? `${API}/places/${id}/rating?user_id=${user.id}`
+      : `${API}/places/${id}/rating`;
+
+    fetch(ratingUrl)
+      .then(res => res.json())
+      .then(data => {
+        setAvgRating(data.avgRating || 0);
+        setUserRating(data.userRating || 0);
+        setVotesCount(data.votesCount || 0);
+      });
+  }, [id, user, place]);
+
+  // Обработчик оценки
+  const handleRatePlace = async (rating) => {
+    if (!user) return alert(t('place.login_required_rating'));
+    
+    try {
+      const response = await fetch(`${API}/places/${id}/rating`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          user_id: user.id, 
+          value: rating 
+        }),
+      });
+
+      if (response.ok) {
+        setUserRating(rating);
+        // Обновляем средний рейтинг и количество голосов
+        const data = await fetch(`${API}/places/${id}/rating`).then(res => res.json());
+        setAvgRating(data.avgRating);
+        setVotesCount(data.votesCount);
+      }
+    } catch (error) {
+      console.error('Ошибка при оценке:', error);
+    }
+  };
+  
   const addToFavorites = async (placeId) => {
     if (!user) return alert(t('place.login_required_favorite'));
     if (isFavorited) return alert(t('place.already_favorited'));
@@ -227,6 +273,31 @@ function PlaceDetail() {
             {isFavorited ? `⭐ ${t('place.already_favorite')}` : t('place.add_to_favorites')}
           </button>
         </div>
+
+        <section className="rating-section">
+          <h2 className="section-title">{t('place.rating')}</h2>
+          <div className="rating-container">
+            <div className="rating-stars">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <span
+                  key={star}
+                  onClick={() => handleRatePlace(star)}
+                  className={`star ${star <= (userRating || avgRating) ? 'filled' : ''}`}
+                >
+                  ★
+                </span>
+              ))}
+            </div>
+            <div className="rating-info">
+              <div className="rating-value">
+                {avgRating.toFixed(1)} {t('place.rating_out_of_5')}
+              </div>
+              <div className="votes-count">
+                {votesCount} {t('place.votes', { count: votesCount, postProcess: 'interval' })}
+              </div>
+            </div>
+          </div>
+        </section>
 
         <section className="comments-section">
           <h2 className="section-title">{t('place.comments')}</h2>
