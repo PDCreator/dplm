@@ -318,3 +318,16 @@
     font-size: 14px;
     color: #666;
 }
+
+.share-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin: 1.5rem 0;
+}
+
+.share-section .section-title {
+    margin-top: 0;
+    margin-bottom: 1rem;
+}

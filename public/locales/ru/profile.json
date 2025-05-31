@@ -22,6 +22,31 @@
       "emailNotVerified": "Email не подтверждён"
     },
     "visited": "Посещенные места",
-    "noVisited": "Вы еще не отметили ни одного места как посещенное"
+    "noVisited": "Вы еще не отметили ни одного места как посещенное",
+
+    "achievements": "Достижения",
+    "achievementsUnlocked": "Разблокировано",
+    "totalAchievements": "Всего достижений",
+    "newAchievementsUnlocked": "Новых достижений: {{count}}",
+    "unlockedOn": "Получено"
+    
+  },
+  "achievements": {
+    "first_visit": {
+      "name": "Первое посещение",
+      "description": "Посетите свое первое место"
+    },
+    "explorer": {
+      "name": "Исследователь",
+      "description": "Посетите 5 разных мест"
+    },
+    "traveler": {
+      "name": "Путешественник",
+      "description": "Посетите 10 разных мест"
+    },
+    "favorite": {
+      "name": "Любимое место",
+      "description": "Добавьте место в избранное"
+    }
   }
 }

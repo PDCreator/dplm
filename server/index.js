@@ -7,18 +7,19 @@ const placeRoutes = require('./routes/places');
 const favoritesRoutes = require('./routes/favorites');
 const userRoutes = require('./routes/users');
 const newsRoutes = require('./routes/news');
+const achievementsRoutes = require('./routes/achievements');
 
 
 require('dotenv').config();
 
 
 const app = express();
-// 📌 Добавь это:
-app.use(express.json()); // чтобы читать JSON из body
+app.use(express.json());
 app.use(cors());
 app.use('/uploads', express.static('uploads'));
 app.use('/api/places', placeRoutes);
 app.use('/api/news', newsRoutes);
+app.use('/api/achievements', achievementsRoutes);
 
 app.use('/api/comments', commentRoutes);
 app.use('/api/likes', likeRoutes);

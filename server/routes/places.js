@@ -794,7 +794,6 @@ router.post('/:id/rating', (req, res) => {
   });
 });
 
-// Добавить место в посещенные
 router.post('/:id/visit', (req, res) => {
   const { id } = req.params;
   const { user_id } = req.body;
@@ -803,18 +802,94 @@ router.post('/:id/visit', (req, res) => {
     return res.status(400).json({ error: 'User ID is required' });
   }
 
-  db.query(
-    'INSERT INTO visited_places (place_id, user_id) VALUES (?, ?)',
-    [id, user_id],
-    (err) => {
-      if (err) {
-        console.error('Ошибка при добавлении в посещенные:', err);
-        return res.status(500).json({ error: 'Ошибка сервера' });
+  // Начинаем транзакцию
+  db.beginTransaction(err => {
+    if (err) return res.status(500).json({ error: 'Ошибка начала транзакции' });
+
+    // 1. Добавляем в посещенные
+    db.query(
+      'INSERT INTO visited_places (place_id, user_id) VALUES (?, ?)',
+      [id, user_id],
+      (err) => {
+        if (err) {
+          return db.rollback(() => {
+            console.error('Ошибка при добавлении в посещенные:', err);
+            res.status(500).json({ error: 'Ошибка сервера' });
+          });
+        }
+
+        // 2. Проверяем достижения
+        checkVisitAchievements(user_id, (achErr, newAchievements) => {
+          if (achErr) {
+            console.error('Ошибка при проверке достижений:', achErr);
+            // Не отменяем добавление, просто логируем ошибку
+          }
+
+          // Фиксируем транзакцию
+          db.commit(commitErr => {
+            if (commitErr) {
+              return db.rollback(() => {
+                res.status(500).json({ error: 'Ошибка фиксации транзакции' });
+              });
+            }
+
+            res.json({ 
+              message: 'Место добавлено в посещенные',
+              newAchievements: newAchievements || []
+            });
+          });
+        });
       }
-      res.json({ message: 'Место добавлено в посещенные' });
+    );
+  });
+});
+
+// Вспомогательная функция для проверки достижений
+function checkVisitAchievements(userId, callback) {
+  db.query(
+    'SELECT COUNT(*) as count FROM visited_places WHERE user_id = ?',
+    [userId],
+    (err, [result]) => {
+      if (err) return callback(err);
+      
+      const visitCount = result.count;
+      const newAchievements = [];
+      
+      // Проверяем условия достижений
+      const achievementsToCheck = [
+        { id: 1, condition: visitCount >= 1 },  // Первое посещение
+        { id: 2, condition: visitCount >= 5 },  // Исследователь
+        { id: 3, condition: visitCount >= 10 }  // Путешественник
+      ];
+      
+      // Проверяем каждое достижение
+      let completed = 0;
+      achievementsToCheck.forEach(ach => {
+        if (ach.condition) {
+          db.query(
+            'INSERT IGNORE INTO user_achievements (user_id, achievement_id) VALUES (?, ?)',
+            [userId, ach.id],
+            (insErr) => {
+              if (!insErr) {
+                newAchievements.push(ach.id);
+              }
+              completed++;
+              
+              if (completed === achievementsToCheck.length) {
+                callback(null, newAchievements);
+              }
+            }
+          );
+        } else {
+          completed++;
+          if (completed === achievementsToCheck.length) {
+            callback(null, newAchievements);
+          }
+        }
+      });
     }
   );
-});
+}
 
 // Удалить место из посещенных
 router.delete('/:id/visit', (req, res) => {

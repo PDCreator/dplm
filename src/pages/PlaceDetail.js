@@ -3,7 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { useTranslation } from 'react-i18next';
 import API from '../components/api';
+import ShareButtons from '../components/ShareButtons';
 import '../styles/PlaceDetail.css';
+
 
 function PlaceDetail() {
   const { t } = useTranslation( 'placeNewsDetail');
@@ -22,6 +24,8 @@ function PlaceDetail() {
   const [avgRating, setAvgRating] = useState(0);
   const [votesCount, setVotesCount] = useState(0);
   const [isVisited, setIsVisited] = useState(false);
+
+
 
   useEffect(() => {
   if (!place || !place.latitude || !place.longitude) return;
@@ -246,6 +250,12 @@ function PlaceDetail() {
     );
   };
 
+  // Получаем текущий URL
+  const shareUrl = window.location.href;
+  const shareTitle = place?.title || 'Интересное место';
+  const shareDescription = place?.description 
+    ? `${place.title}: ${place.description.substring(0, 100)}...` 
+    : 'Посмотрите это место на нашем сайте';
   if (!place) return <div>{t('common.loading')}</div>;
 
   return (
@@ -311,7 +321,14 @@ function PlaceDetail() {
             {isVisited ? '✓ ' + t('place.visited') : t('place.mark_visited')}
           </button>
         </div>
-
+        <section className="share-section">
+          <h3 className="section-title">{t('place.share')}</h3>
+          <ShareButtons 
+            url={shareUrl}
+            title={shareTitle}
+            description={shareDescription}
+          />
+        </section>
         <section className="rating-section">
           <h2 className="section-title">{t('place.rating')}</h2>
           <div className="rating-container">

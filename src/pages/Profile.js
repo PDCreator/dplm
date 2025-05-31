@@ -20,6 +20,9 @@ function Profile() {
   const [visitedPlaces, setVisitedPlaces] = useState([]);
   const [activeTab, setActiveTab] = useState('favorites');
 
+  const [achievements, setAchievements] = useState([]);
+  const [newAchievements, setNewAchievements] = useState([]);
+
   useEffect(() => {
     if (user) {
       fetch(`${API}/favorites/user/${user.id}`)
@@ -91,6 +94,38 @@ function Profile() {
       setVisitedPlaces(visitedPlaces.filter(place => place.id !== placeId));
     }
   };
+  // Загружаем достижения
+  useEffect(() => {
+    if (user) {
+      fetch(`${API}/achievements/user/${user.id}`)
+        .then(res => res.json())
+        .then(setAchievements);
+    }
+  }, [user]);
+    // Проверяем новые достижения при изменениях
+  useEffect(() => {
+    if (visitedPlaces.length > 0 && user) {
+      fetch(`${API}/achievements/check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userId: user.id, 
+          action: 'place_visited',
+          data: { count: visitedPlaces.length }
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.newAchievements.length > 0) {
+          setNewAchievements(data.newAchievements);
+          // Перезагружаем достижения
+          fetch(`${API}/achievements/user/${user.id}`)
+            .then(res => res.json())
+            .then(setAchievements);
+        }
+      });
+    }
+  }, [visitedPlaces.length, user]);
   if (!user) return <div>{t('messages.loginRequired')}</div>;
 
   return (
@@ -216,6 +251,51 @@ function Profile() {
           )}
         </div>
         )}
+        <div className="achievements-section">
+          <h3>{t('profile.achievements')}</h3>
+          <div className="achievements-stats">
+            <div className="stat-card">
+              <span className="stat-value">{achievements.filter(a => a.unlocked).length}</span>
+              <span className="stat-label">{t('profile.achievementsUnlocked')}</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-value">{achievements.length}</span>
+              <span className="stat-label">{t('profile.totalAchievements')}</span>
+            </div>
+          </div>
+          
+          {newAchievements.length > 0 && (
+            <div className="new-achievements-banner">
+              {t('profile.newAchievementsUnlocked', { count: newAchievements.length })}
+            </div>
+          )}
+          
+          <div className="achievements-grid">
+            {achievements.map(ach => (
+              <div 
+                key={ach.id} 
+                className={`achievement-card ${ach.unlocked ? 'unlocked' : 'locked'}`}
+              >
+                <div className="achievement-icon">
+                  {ach.unlocked ? (
+                    <img src={`/icons/${ach.icon}`} alt={ach.name} />
+                  ) : (
+                    <div className="locked-icon">🔒</div>
+                  )}
+                </div>
+                <div className="achievement-info">
+                  <h4>{ach.name}</h4>
+                  <p>{ach.description}</p>
+                  {ach.unlocked && (
+                    <div className="achievement-date">
+                      {t('profile.unlockedOn')} {new Date(ach.unlocked_at).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+      </div>
     </div>
   );
 }
