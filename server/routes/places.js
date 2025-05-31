@@ -793,6 +793,96 @@ router.post('/:id/rating', (req, res) => {
     );
   });
 });
+
+// Добавить место в посещенные
+router.post('/:id/visit', (req, res) => {
+  const { id } = req.params;
+  const { user_id } = req.body;
+
+  if (!user_id) {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  db.query(
+    'INSERT INTO visited_places (place_id, user_id) VALUES (?, ?)',
+    [id, user_id],
+    (err) => {
+      if (err) {
+        console.error('Ошибка при добавлении в посещенные:', err);
+        return res.status(500).json({ error: 'Ошибка сервера' });
+      }
+      res.json({ message: 'Место добавлено в посещенные' });
+    }
+  );
+});
+
+// Удалить место из посещенных
+router.delete('/:id/visit', (req, res) => {
+  const { id } = req.params;
+  const { user_id } = req.query;
+
+  if (!user_id) {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  db.query(
+    'DELETE FROM visited_places WHERE place_id = ? AND user_id = ?',
+    [id, user_id],
+    (err) => {
+      if (err) {
+        console.error('Ошибка при удалении из посещенных:', err);
+        return res.status(500).json({ error: 'Ошибка сервера' });
+      }
+      res.json({ message: 'Место удалено из посещенных' });
+    }
+  );
+});
+
+// Проверить, посещено ли место пользователем
+router.get('/:id/visit', (req, res) => {
+  const { id } = req.params;
+  const { user_id } = req.query;
+
+  if (!user_id) {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  db.query(
+    'SELECT id FROM visited_places WHERE place_id = ? AND user_id = ?',
+    [id, user_id],
+    (err, results) => {
+      if (err) {
+        console.error('Ошибка при проверке посещения:', err);
+        return res.status(500).json({ error: 'Ошибка сервера' });
+      }
+      res.json({ isVisited: results.length > 0 });
+    }
+  );
+});
+
+// Получить посещенные места пользователя
+router.get('/user/visited', (req, res) => {
+  const { user_id } = req.query;
+
+  if (!user_id) {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  db.query(`
+    SELECT p.*, 
+      (SELECT image_url FROM place_images WHERE place_id = p.id LIMIT 1) AS image
+    FROM places p
+    JOIN visited_places vp ON p.id = vp.place_id
+    WHERE vp.user_id = ?
+    ORDER BY vp.visited_at DESC
+  `, [user_id], (err, results) => {
+    if (err) {
+      console.error('Ошибка при получении посещенных мест:', err);
+      return res.status(500).json({ error: 'Ошибка сервера' });
+    }
+    res.json(results);
+  });
+});
 // Получить одно место по ID с изображениями и тегами
 router.get('/:id', (req, res) => {
   const { id } = req.params;

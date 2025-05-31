@@ -13,8 +13,6 @@ function Places() {
   const [cities, setCities] = useState([]);
   const [selectedCity, setSelectedCity] = useState(null);
   const [showSuggestionForm, setShowSuggestionForm] = useState(false);
-  const [userRating, setUserRating] = useState(0);
-  const [avgRating, setAvgRating] = useState(0);
   
 
   // Загружаем города отдельно

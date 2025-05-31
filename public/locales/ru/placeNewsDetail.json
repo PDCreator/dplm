@@ -24,7 +24,10 @@
     "rating": "Рейтинг",
     "rating_out_of_5": "из 5",
     "login_required_rating": "Войдите, чтобы оценить это место",
-    "votes": "голосов"
+    "votes": "голосов",
+    "visited": "Посещено",
+    "mark_visited": "Отметить посещенным",
+    "login_required_visit": "Войдите, чтобы отмечать посещенные места"
   },
   "news": {
     "published_on": "Опубликовано:",

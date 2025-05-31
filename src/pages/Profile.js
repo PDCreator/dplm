@@ -17,6 +17,9 @@ function Profile() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [visitedPlaces, setVisitedPlaces] = useState([]);
+  const [activeTab, setActiveTab] = useState('favorites');
+
   useEffect(() => {
     if (user) {
       fetch(`${API}/favorites/user/${user.id}`)
@@ -67,6 +70,27 @@ function Profile() {
     setEditingEmail(false);
   };
 
+  // Добавляем загрузку посещенных мест
+  useEffect(() => {
+    if (user && activeTab === 'visited') {
+      fetch(`${API}/places/user/visited?user_id=${user.id}`)
+        .then(res => res.json())
+        .then(setVisitedPlaces);
+    }
+  }, [user, activeTab]);
+
+  // Функция для удаления из посещенных
+  const removeFromVisited = async (placeId) => {
+    if (!user) return alert(t('profile.messages.loginRequired'));
+
+    const res = await fetch(`${API}/places/${placeId}/visit?user_id=${user.id}`, {
+      method: 'DELETE'
+    });
+
+    if (res.ok) {
+      setVisitedPlaces(visitedPlaces.filter(place => place.id !== placeId));
+    }
+  };
   if (!user) return <div>{t('messages.loginRequired')}</div>;
 
   return (
@@ -117,40 +141,81 @@ function Profile() {
           </div>
         )}
       </div>
-
-      <div className="favorites-section">
-        <h3>{t('profile.favorites')}</h3>
-        {favorites.length > 0 ? (
-          <div className="favorites-grid">
-            {favorites.map(place => (
-              <div key={place.id} className="favorite-card">
-                <Link to={`/places/${place.id}`} className="favorite-link">
-                  {place.image && (
-                    <img
-                      src={`${API}/uploads/${place.image}`}
-                      alt={place.title}
-                      className="favorite-image"
-                    />
-                  )}
-                  <div className="favorite-content">
-                    <h4 className="favorite-title">{place.title}</h4>
-                  </div>
-                </Link>
-                <button
-                  onClick={() => removeFromFavorites(place.id)}
-                  className="remove-favorite-btn"
-                >
-                  {t('profile.buttons.removeFavorite')}
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="empty-favorites">
-            <p>{t('profile.noFavorites')}</p>
-          </div>
-        )}
+      <div className="profile-tabs">
+        <button 
+          onClick={() => setActiveTab('favorites')} 
+          className={activeTab === 'favorites' ? 'active' : ''}
+        >
+          {t('profile.favorites')}
+        </button>
+        <button 
+          onClick={() => setActiveTab('visited')} 
+          className={activeTab === 'visited' ? 'active' : ''}
+        >
+          {t('profile.visited')}
+        </button>
       </div>
+      {activeTab === 'favorites' ? (
+        <div className="favorites-section">
+          <h3>{t('profile.favorites')}</h3>
+          {favorites.length > 0 ? (
+            <div className="favorites-grid">
+              {favorites.map(place => (
+                <div key={place.id} className="favorite-card">
+                  <Link to={`/places/${place.id}`} className="favorite-link">
+                    {place.image && (
+                      <img
+                        src={`${API}/uploads/${place.image}`}
+                        alt={place.title}
+                        className="favorite-image"
+                      />
+                    )}
+                    <div className="favorite-content">
+                      <h4 className="favorite-title">{place.title}</h4>
+                    </div>
+                  </Link>
+                  <button
+                    onClick={() => removeFromFavorites(place.id)}
+                    className="remove-favorite-btn"
+                  >
+                    {t('profile.buttons.removeFavorite')}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-favorites">
+              <p>{t('profile.noFavorites')}</p>
+            </div>
+          )}
+        </div>) : (
+          <div className="visited-section">
+          <h3>{t('profile.visited')}</h3>
+          {visitedPlaces.length > 0 ? (
+            <div className="visited-places-grid">
+              {visitedPlaces.map(place => (
+                <div key={place.id} className="visited-place-card">
+                  <Link to={`/places/${place.id}`} className="visited-place-link">
+                    <div className="visited-place-content">
+                      <h4 className="visited-place-title">{place.title}</h4>
+                    </div>
+                  </Link>
+                  <button
+                    onClick={() => removeFromVisited(place.id)}
+                    className="remove-visited-btn"
+                  >
+                    {t('profile.buttons.removeVisited')}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-places">
+              <p>{t('profile.noVisited')}</p>
+            </div>
+          )}
+        </div>
+        )}
     </div>
   );
 }

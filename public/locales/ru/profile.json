@@ -13,12 +13,15 @@
     "buttons": {
       "save": "Сохранить",
       "changeEmail": "Изменить email",
-      "removeFavorite": "Удалить из избранного"
+      "removeFavorite": "Удалить из избранного",
+      "removeVisited": "Удалить из посещенных"
     },
     "messages": {
       "loginRequired": "Для доступа к профилю, пожалуйста, войдите",
       "emailVerified": "Email успешно подтверждён!",
       "emailNotVerified": "Email не подтверждён"
-    }
+    },
+    "visited": "Посещенные места",
+    "noVisited": "Вы еще не отметили ни одного места как посещенное"
   }
 }

@@ -21,6 +21,7 @@ function PlaceDetail() {
   const [userRating, setUserRating] = useState(0);
   const [avgRating, setAvgRating] = useState(0);
   const [votesCount, setVotesCount] = useState(0);
+  const [isVisited, setIsVisited] = useState(false);
 
   useEffect(() => {
   if (!place || !place.latitude || !place.longitude) return;
@@ -145,6 +146,37 @@ function PlaceDetail() {
     }
   };
   
+
+    // Добавляем в useEffect загрузку статуса посещения
+  useEffect(() => {
+    if (!place || !user) return;
+    
+    fetch(`${API}/places/${id}/visit?user_id=${user.id}`)
+      .then(res => res.json())
+      .then(data => setIsVisited(data.isVisited));
+  }, [id, user, place]);
+
+  // Обработчик посещения
+  const toggleVisitedStatus = async () => {
+    if (!user) return alert(t('place.login_required_visit'));
+
+    try {
+      if (isVisited) {
+        await fetch(`${API}/places/${id}/visit?user_id=${user.id}`, {
+          method: 'DELETE'
+        });
+      } else {
+        await fetch(`${API}/places/${id}/visit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: user.id })
+        });
+      }
+      setIsVisited(!isVisited);
+    } catch (error) {
+      console.error('Ошибка при изменении статуса посещения:', error);
+    }
+  };
   const addToFavorites = async (placeId) => {
     if (!user) return alert(t('place.login_required_favorite'));
     if (isFavorited) return alert(t('place.already_favorited'));
@@ -271,6 +303,12 @@ function PlaceDetail() {
             className={`favorite-btn ${isFavorited ? 'favorited' : ''}`}
           >
             {isFavorited ? `⭐ ${t('place.already_favorite')}` : t('place.add_to_favorites')}
+          </button>
+          <button 
+            onClick={toggleVisitedStatus}
+            className={`visited-btn ${isVisited ? 'visited' : ''}`}
+          >
+            {isVisited ? '✓ ' + t('place.visited') : t('place.mark_visited')}
           </button>
         </div>
 
