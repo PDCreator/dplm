@@ -20,7 +20,16 @@
     "login_required_like": "Inicia sesión para dar me gusta",
     "login_required_comment": "Inicia sesión para comentar",
     "login_required_favorite": "Inicia sesión para añadir a favoritos",
-    "already_favorited": "Este lugar ya está en tus favoritos"
+    "already_favorited": "Este lugar ya está en tus favoritos",
+    "rating": "Rating",
+    "rating_out_of_5": "de 5",
+    "login_required_rating": "Inicie sesión para evaluar este lugar",
+    "votes": "voces",
+    "visited": "Asistio",
+    "mark_visited": "Marcar los visitados",
+    "login_required_visit": "Inicie sesión para marcar los lugares visitados",
+    "share": "Compartir"
+
   },
   "news": {
     "published_on": "Publicado el:",
