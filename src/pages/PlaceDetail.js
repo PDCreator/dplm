@@ -37,7 +37,6 @@ function PlaceDetail() {
   const initMap = () => {
     try {
       window.ymaps.ready(() => {
-        // Удаляем предыдущую карту, если есть
         const existingMap = document.getElementById('map');
         if (existingMap && existingMap._yandexMap) {
           existingMap._yandexMap.destroy();
@@ -56,7 +55,6 @@ function PlaceDetail() {
 
         map.geoObjects.add(placemark);
         
-        // Сохраняем ссылку на карту
         document.getElementById('map')._yandexMap = map;
       });
     } catch (error) {
@@ -107,7 +105,7 @@ function PlaceDetail() {
     }
   }, [id, user]);
 
-// Загрузка рейтинга при монтировании
+// загрузка рейтинга
   useEffect(() => {
     if (!place) return;
     
@@ -140,7 +138,6 @@ function PlaceDetail() {
 
       if (response.ok) {
         setUserRating(rating);
-        // Обновляем средний рейтинг и количество голосов
         const data = await fetch(`${API}/places/${id}/rating`).then(res => res.json());
         setAvgRating(data.avgRating);
         setVotesCount(data.votesCount);
@@ -151,7 +148,7 @@ function PlaceDetail() {
   };
   
 
-    // Добавляем в useEffect загрузку статуса посещения
+    // статус посещения
   useEffect(() => {
     if (!place || !user) return;
     
@@ -250,7 +247,7 @@ function PlaceDetail() {
     );
   };
 
-  // Получаем текущий URL
+  // URL для кнопок "поделиться в соцсетях"
   const shareUrl = window.location.href;
   const shareTitle = place?.title || 'Интересное место';
   const shareDescription = place?.description 

@@ -15,9 +15,8 @@ router.post('/:place_id', (req, res) => {
   });
   
 
-// routes/favorites.js
 router.delete('/:place_id', (req, res) => {
-    const { user_id } = req.body; // user_id из запроса
+    const { user_id } = req.body; 
     const { place_id } = req.params;
   
     const query = 'DELETE FROM favorites WHERE user_id = ? AND place_id = ?';
@@ -28,7 +27,6 @@ router.delete('/:place_id', (req, res) => {
   });
 
   
-  // routes/favorites.js
 router.get('/user/:user_id', (req, res) => {
     const { user_id } = req.params;
     

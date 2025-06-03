@@ -63,7 +63,6 @@ router.post('/login', (req, res) => {
         return res.status(401).json({ message: 'Неверный логин или пароль' });
       }
   
-      // Тут можно добавить токен/сессию, но пока просто ответ:
       res.json({ message: 'Успешный вход', user: { id: user.id, username: user.username, is_admin: user.is_admin } });
     });
   });
@@ -107,7 +106,7 @@ router.post('/set-email', (req, res) => {
   const token = crypto.randomBytes(32).toString('hex');
   const verificationLink = `http://localhost:5000/api/auth/verify-email?token=${token}`;
 
-  // Сохраняем токен в БД — можно отдельную таблицу или временно в `users`
+  // Сохраняем токен в БД
   db.query('UPDATE users SET email = ?, email_verified = 0, email_verification_token = ? WHERE id = ?', 
     [email, token, user_id], (err) => {
     if (err) return res.status(500).json({ message: 'Ошибка при обновлении email' });

@@ -298,7 +298,6 @@ router.delete('/tags/:id', (req, res) => {
       return res.status(404).json({ error: 'Тег не найден' });
     }
 
-    // Начинаем транзакцию для безопасного удаления
     db.beginTransaction(err => {
       if (err) {
         console.error('Ошибка начала транзакции:', err);
@@ -343,7 +342,7 @@ router.delete('/tags/:id', (req, res) => {
   });
 });
 
-// Получить названия мест (для автокомплита)
+// Получить названия мест для автокомплита
 router.get('/names', (req, res) => {
   db.query('SELECT id, title AS name FROM places ORDER BY title', (err, results) => {
     if (err) return res.status(500).json({ message: 'Ошибка при загрузке мест' });
@@ -351,7 +350,7 @@ router.get('/names', (req, res) => {
   });
 });
 
-// Добавить предложение места (исправленная callback-версия)
+// Добавить предложение места РАБОТАЕТ!!
 router.post('/suggestions', upload.array('images'), (req, res) => {
   const { user_id, title, description, latitude, longitude, tagIds } = req.body;
   const files = req.files;
@@ -479,12 +478,11 @@ router.get('/suggestions/:id', async (req, res) => {
   }
 });
 
-// Одобрить предложение (callback-версия)
+// Одобрить предложение
 router.post('/suggestions/:id/approve', (req, res) => {
   const { id } = req.params;
   const { admin_comment } = req.body;
 
-  // Начинаем транзакцию
   db.beginTransaction((beginErr) => {
     if (beginErr) {
       console.error('Ошибка начала транзакции:', beginErr);
@@ -514,7 +512,7 @@ router.post('/suggestions/:id/approve', (req, res) => {
 
           const placeId = result.insertId;
           let completedOperations = 0;
-          const totalOperations = 2; // Перенос тегов и изображений
+          const totalOperations = 2;
 
           // 3. Переносим теги
           db.query(`
@@ -609,12 +607,11 @@ router.post('/suggestions/:id/approve', (req, res) => {
   });
 });
 
-// Отклонить предложение (callback-версия)
+// Отклонить предложение
 router.post('/suggestions/:id/reject', (req, res) => {
   const { id } = req.params;
   const { admin_comment } = req.body;
 
-  // Начинаем транзакцию
   db.beginTransaction((beginErr) => {
     if (beginErr) {
       console.error('Ошибка начала транзакции:', beginErr);
@@ -751,7 +748,6 @@ router.post('/:id/rating', (req, res) => {
     return res.status(400).json({ error: 'Некорректные данные' });
   }
 
-  // Начинаем транзакцию
   db.beginTransaction(err => {
     if (err) return res.status(500).json({ error: 'Ошибка начала транзакции' });
 
@@ -802,7 +798,6 @@ router.post('/:id/visit', (req, res) => {
     return res.status(400).json({ error: 'User ID is required' });
   }
 
-  // Начинаем транзакцию
   db.beginTransaction(err => {
     if (err) return res.status(500).json({ error: 'Ошибка начала транзакции' });
 
@@ -844,7 +839,7 @@ router.post('/:id/visit', (req, res) => {
   });
 });
 
-// Вспомогательная функция для проверки достижений
+// проверка достижений(пока только посещенные места)
 function checkVisitAchievements(userId, callback) {
   db.query(
     'SELECT COUNT(*) as count FROM visited_places WHERE user_id = ?',
@@ -855,7 +850,7 @@ function checkVisitAchievements(userId, callback) {
       const visitCount = result.count;
       const newAchievements = [];
       
-      // Проверяем условия достижений
+      //условия достижений
       const achievementsToCheck = [
         { id: 1, condition: visitCount >= 1 },  // Первое посещение
         { id: 2, condition: visitCount >= 5 },  // Исследователь

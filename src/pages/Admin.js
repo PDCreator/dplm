@@ -79,7 +79,6 @@ function Admin() {
   const fetchTags = async () => {
     const res = await fetch('http://localhost:5000/api/places/tags');
     const data = await res.json();
-    // Сортируем теги по имени для удобства выбора
     setAvailableTags(data.sort((a, b) => a.name.localeCompare(b.name)));
   };
   const fetchSuggestions = async () => {
@@ -128,7 +127,6 @@ function Admin() {
     setSelectedTags(selectedTags.filter(tag => tag.id !== tagId));
   };
 
-  // Обновим handleAddNewTag
   const handleAddNewTag = async () => {
     if (!newTagName.trim()) return;
     
@@ -146,7 +144,6 @@ function Admin() {
         const data = await res.json();
         setAvailableTags([...availableTags, data]);
         if (isCityTag) {
-          // Если добавляем город, обновляем список городов
           //fetchCities();
         }
         setNewTagName('');
@@ -168,7 +165,6 @@ function Admin() {
       });
       
       if (res.ok) {
-        // Обновляем список тегов
         await fetchTags();
         setTagToDelete('');
         setPlaceMessage('Тег успешно удален');
@@ -351,7 +347,7 @@ function Admin() {
 
     if (res.ok) {
       fetchSuggestions();
-      fetchPlaces(); // Обновляем список мест
+      fetchPlaces();
     }
   };
 

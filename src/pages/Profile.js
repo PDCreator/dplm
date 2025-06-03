@@ -73,7 +73,7 @@ function Profile() {
     setEditingEmail(false);
   };
 
-  // Добавляем загрузку посещенных мест
+  //загрузк посещенных мест
   useEffect(() => {
     if (user && activeTab === 'visited') {
       fetch(`${API}/places/user/visited?user_id=${user.id}`)
@@ -82,7 +82,7 @@ function Profile() {
     }
   }, [user, activeTab]);
 
-  // Функция для удаления из посещенных
+  //удаление из посещенных
   const removeFromVisited = async (placeId) => {
     if (!user) return alert(t('profile.messages.loginRequired'));
 
@@ -94,7 +94,7 @@ function Profile() {
       setVisitedPlaces(visitedPlaces.filter(place => place.id !== placeId));
     }
   };
-  // Загружаем достижения
+  //достижения
   useEffect(() => {
     if (user) {
       fetch(`${API}/achievements/user/${user.id}`)
@@ -102,7 +102,6 @@ function Profile() {
         .then(setAchievements);
     }
   }, [user]);
-    // Проверяем новые достижения при изменениях
   useEffect(() => {
     if (visitedPlaces.length > 0 && user) {
       fetch(`${API}/achievements/check`, {
@@ -118,7 +117,6 @@ function Profile() {
       .then(data => {
         if (data.newAchievements.length > 0) {
           setNewAchievements(data.newAchievements);
-          // Перезагружаем достижения
           fetch(`${API}/achievements/user/${user.id}`)
             .then(res => res.json())
             .then(setAchievements);

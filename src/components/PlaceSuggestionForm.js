@@ -128,7 +128,7 @@ function PlaceSuggestionForm({ onClose }) {
             />
           </div>
 
-          {/* Теги - стилизованные как в админке */}
+          {/* Теги */}
           <div className="admin-tags-container">
             <label>Теги:</label>
             <div className="admin-tags-selected">

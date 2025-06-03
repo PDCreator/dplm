@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// 📤 Функция отправки письма
+// Функция отправки письма
 function sendEmail(to, subject, html) {
   return transporter.sendMail({
     from: process.env.EMAIL_USER,
@@ -22,7 +22,7 @@ function sendEmail(to, subject, html) {
   });
 }
 
-// 📥 Получить все новости с местами
+// Получить все новости с местами
 router.get('/', (req, res) => {
   db.query('SELECT * FROM news ORDER BY created_at DESC', (err, newsResults) => {
     if (err) return res.status(500).json({ error: 'Ошибка базы данных' });
@@ -41,7 +41,7 @@ router.get('/', (req, res) => {
     `, [newsIds], (placeErr, placeResults) => {
       if (placeErr) {
         console.error('Ошибка при получении мест:', placeErr);
-        return res.json(newsResults); // Возвращаем новости без мест при ошибке
+        return res.json(newsResults); 
       }
       
       // Группируем места по новостям
@@ -63,7 +63,7 @@ router.get('/', (req, res) => {
 });
 
 
-// ➕ Добавить новость и связать с местами
+// Добавить новость и связать с местами
 router.post('/', (req, res) => {
   const { title, content, placeIds } = req.body;
 
@@ -89,13 +89,11 @@ router.post('/', (req, res) => {
           return res.status(500).json({ message: 'Новость добавлена, но рассылка не удалась' });
         }
 
-        // Создаем маппинг id места -> название
         const placeMap = places.reduce((acc, place) => {
           acc[place.id] = place.title;
           return acc;
         }, {});
 
-        // Поиск пользователей с этими местами в избранном и подтвержденным email
         const usersQuery = `
           SELECT DISTINCT u.email, f.place_id FROM users u
           JOIN favorites f ON f.user_id = u.id
@@ -108,12 +106,10 @@ router.post('/', (req, res) => {
             return res.status(500).json({ message: 'Новость добавлена, но рассылка не удалась' });
           }
 
-          // Группируем пользователей по email (чтобы не дублировать письма)
           const userEmails = [...new Set(users.map(u => u.email))];
 
           // Рассылка email
           const emailPromises = userEmails.map(email => {
-            // Находим все места пользователя, связанные с этой новостью
             const userPlaces = users
               .filter(u => u.email === email)
               .map(u => placeMap[u.place_id]);
@@ -155,7 +151,7 @@ router.post('/', (req, res) => {
   });
 });
 
-// ✏️ Обновить новость
+// Обновить новость
 router.put('/:id', (req, res) => {
   const { title, content } = req.body;
   const { id } = req.params;
@@ -170,11 +166,10 @@ router.put('/:id', (req, res) => {
   });
 });
 
-// ❌ Удалить новость
+// Удалить новость
 router.delete('/:id', (req, res) => {
   const { id } = req.params;
 
-  // Начинаем транзакцию
   db.beginTransaction(err => {
     if (err) return res.status(500).json({ message: 'Ошибка начала транзакции' });
 
@@ -217,7 +212,7 @@ router.delete('/:id', (req, res) => {
   });
 });
 
-// 🔍 Получить новость по ID с местами
+// Получить новость по ID с местами
 router.get('/:id', (req, res) => {
   const { id } = req.params;
 
@@ -237,7 +232,7 @@ router.get('/:id', (req, res) => {
     `, [id], (placeErr, placeResults) => {
       if (placeErr) {
         console.error('Ошибка при получении мест:', placeErr);
-        return res.json(news); // Возвращаем новость без мест при ошибке
+        return res.json(news);
       }
       
       news.places = placeResults;
@@ -245,7 +240,7 @@ router.get('/:id', (req, res) => {
     });
   });
 });
-// 🔍 Получить новости по месту
+// Получить новости по месту
 router.get('/by-place/:placeId', (req, res) => {
   const { placeId } = req.params;
   const query = `

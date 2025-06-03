@@ -15,7 +15,7 @@ function Places() {
   const [showSuggestionForm, setShowSuggestionForm] = useState(false);
   
 
-  // Загружаем города отдельно
+  // места с городами и тегами
   const fetchCities = async () => {
     try {
       const res = await fetch(`${API}/places/tags?include_cities=true`);
@@ -26,7 +26,7 @@ function Places() {
     }
   };
 
-  // Загружаем только обычные теги (не города)
+  //только обычные теги
   const fetchTags = () => {
     fetch(`${API}/places/tags?include_cities=false`)
       .then(res => res.json())
@@ -38,7 +38,6 @@ function Places() {
     const query = new URLSearchParams();
     if (search) query.append('search', search);
     
-    // Собираем все выбранные теги (включая город)
     const allSelectedTagIds = [...selectedTags];
     if (selectedCity) {
       allSelectedTagIds.push(selectedCity);
@@ -130,7 +129,7 @@ function Places() {
             <button type="submit" className="search-btn">{t('places.search_button')}</button>
           </div>
 
-          {/* Отображаем только обычные теги (не города) */}
+          {/* только обычные теги */}
           <div className="selected-tags">
             {displaySelectedTags.map(tag => (
               <span 
@@ -150,12 +149,12 @@ function Places() {
           </div>
         </form>
 
-        {/* Список обычных тегов (не городов) */}
+        {/* обычные тегов*/}
         <div className="tags-filter">
           <h3>{t('places.filter_by_tags')}:</h3>
           <div className="tags-list">
             {availableTags
-              .filter(tag => !tag.is_city) // Дополнительная фильтрация на случай если пришли города
+              .filter(tag => !tag.is_city)
               .map(tag => (
                 <button
                   key={tag.id}
